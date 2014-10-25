@@ -1,0 +1,6 @@
+@CHARSET "US-ASCII";
+
+.b2
+font {
+	23
+}

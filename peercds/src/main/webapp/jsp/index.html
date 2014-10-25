@@ -1,0 +1,335 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+      <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Peer CDS</title>
+	<!-- BOOTSTRAP STYLES-->
+    <link href="assets/css/bootstrap.css" rel="stylesheet" />
+     <!-- FONTAWESOME STYLES-->
+    <link href="assets/css/font-awesome.css" rel="stylesheet" />
+     <!-- MORRIS CHART STYLES-->
+    <link href="assets/js/morris/morris-0.4.3.min.css" rel="stylesheet" />
+        <!-- CUSTOM STYLES-->
+    <link href="assets/css/custom.css" rel="stylesheet" />
+     <!-- GOOGLE FONTS-->
+   <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
+   <script src="assets/js/jquery-2.0.0.min.js"></script>
+   <script src="assets/js/bootstrap.file-input.js"></script>
+   <script src="assets/js/peer.js"></script>
+   
+</head>
+<body>
+    <div id="wrapper">
+        <nav class="navbar navbar-default navbar-cls-top " role="navigation" style="margin-bottom: 0">
+        	<div id="create_btn" style="display: inline">
+        	<!-- <button class="btn btn-danger" type="file" id="create_torrent">Create Torrent <i class="fa fa-plus-circle"></i></button> -->
+        	<!-- <input type="file" title="Search for a file to add" id="create_file"> -->
+        	<span class="btn btn-success btn-file" id="default-path">
+    			<i class="fa fa-cogs"></i> Set Default Path 
+			</span>
+			
+        	<span class="btn btn-danger btn-file" id="share-torrent">
+    			<i class="fa fa-share-square"></i> Share Torrent <input type="file" title="Search for a file to add" id="create_torrent">
+			</span>
+			
+			<span class="btn btn-info btn-file" id="download-torrent">
+				<!-- Multi Torrent <input type="file" title="Search for a file to add" id="create_torrent" webkitdirectory="" directory=""> -->
+				<i class="fa fa-download"></i> Download Torrent <input type="file" title="Search for a file to add" id="create_torrent">
+        	</span>
+        	</div>
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">Peer Share</a> 
+            </div>
+        </nav>   
+           <!-- /. NAV TOP  -->
+            <nav class="navbar-default navbar-side" role="navigation" id="navbar" >
+            <div class="sidebar-collapse">
+                <ul class="nav" id="main-menu" style="height:100%">
+						<li class="text-center">
+	                    	<img src="assets/img/find_user.png" class="user-image img-responsive"/>
+						</li>
+	                    <li>
+	                        <a class="active-menu" ><i class="fa fa-archive fa-3x"></i> All</a>
+	                    </li>
+	                     <li id="downloading_files">
+	                        <a><i class="fa fa-download fa-3x"></i> Downloading</a>
+	                    </li>
+	                    <li>
+	                        <a><i class="fa fa-upload fa-3x"></i> Uploading</a>
+	                    </li>
+                    </div>
+                </ul>
+               
+            </div>
+            
+        </nav>  
+        <!-- /. NAV SIDE  -->
+        <div id="page-wrapper" >
+            <div id="page-inner">
+                <div class="row">
+                    <div class="col-md-12">
+                     	<h2>Application Dashboard</h2>   
+                    </div>
+                
+             <div class="col-md-3 col-sm-6 col-xs-6">           
+				<div class="panel panel-back noti-box">
+	                <span class="icon-box bg-color-green set-icon">
+	                    <i class="fa fa-play"></i>
+	                </span>
+	                <div class="text-box" >
+	                    <p class="main-text">Play</p>
+	                    <!-- <p class="text-muted">Messages</p> -->
+	                </div>
+	             </div>
+		     </div>
+             
+             
+             
+             <div class="col-md-3 col-sm-6 col-xs-6">           
+				<div class="panel panel-back noti-box">
+	                <span class="icon-box bg-color-brown set-icon">
+	                    <i class="fa fa-stop"></i>
+	                </span>
+	                <div class="text-box" >
+	                    <p class="main-text">Stop</p>
+	                    <!-- <p class="text-muted">Notifications</p> -->
+	                </div>
+	             </div>
+		     </div>
+		     
+            <div class="col-md-3 col-sm-6 col-xs-6">           
+				<div class="panel panel-back noti-box">
+	                <span class="icon-box bg-color-red set-icon">
+	                    <i class="fa fa-trash-o"></i>
+	                </span>
+	                <div class="text-box" >
+	                    <p class="main-text">Trash</p>
+	                    <!-- <p class="text-muted">Pending</p> -->
+	                </div>
+	             </div>
+		     </div>
+			</div>
+                 <!-- /. ROW  -->
+                <hr />                            
+        	
+                    
+           <div class="col-md-9 col-sm-12 col-xs-12">
+              <div class="panel panel-default" id="torrent-list"> 
+                    <div class="panel-heading">
+                       Responsive Table Example
+                    </div>
+            <div class="panel-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>File Name</th>
+						<th>Status</th>
+						<th>Progress</th>
+						<th>Upload</th>
+						<th>Download</th>
+						<th>Peers</th>
+						<th>Seeds</th>
+						<th>ETA</th>
+						<th>Rating</th>
+						<th>Size</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr class="active" clicked="">
+						<td>1</td>
+						<td>hello</td>
+						<td class="downloading">downloading</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+					</tr>
+					<tr class="info" clicked="">
+						<td>2</td>
+						<td>hello</td>
+						<td class="downloading">done</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+					</tr>
+					<tr class="active" clicked="">
+						<td>3</td>
+						<td>hello</td>
+						<td class="downloading">downloading</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+					</tr>
+					<tr class="info" clicked="">
+						<td>4</td>
+						<td>hello</td>
+						<td class="downloading">downloading</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+					</tr>
+					<tr class="active" clicked="">
+						<td>5</td>
+						<td>hello</td>
+						<td class="downloading">downloading</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+					</tr>
+					<tr class="info" clicked="">
+						<td>6</td>
+						<td>hello</td>
+						<td class="downloading">downloading</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+					</tr>
+					<tr class="active" clicked="">
+						<td>7</td>
+						<td>hello</td>
+						<td class="downloading">downloading</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+					</tr>
+					<tr class="info" clicked="">
+						<td>8</td>
+						<td>hello</td>
+						<td class="downloading">downloading</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+						<td>hello</td>
+					</tr>
+				</tbody>
+			</table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    </div>
+                    
+                    <div class="col-md-9 col-sm-12 col-xs-12" id="torrent-info">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            Informtion 
+                        </div>
+                        <div class="panel-body">
+                            <ul class="nav nav-tabs">
+                                <li class="active"><a href="#home" data-toggle="tab">Current Stats</a>
+                                </li>
+                                <!-- <li class=""><a href="#profile" data-toggle="tab">Files</a>
+                                </li>
+                                <li class=""><a href="#messages" data-toggle="tab">Peer</a>
+                                </li> -->
+                                <!-- <li class=""><a href="#settings" data-toggle="tab">Options</a></li> -->
+                            </ul>
+
+                            <div class="tab-content">
+                                <div class="tab-pane fade active in" id="home">
+                                   <div class="col-md-4">
+                                   	<h4>Status: <span class="status"></span></h4>
+                                    <p></p>
+                                    
+                                   </div>
+                                   <div class="col-md-4">
+	                                   	<h4>Remaining:</h4>
+	                                    <h4>Time Elapsed:</h4>
+                                   </div>
+                                   <div class="col-md-4">
+	                                   	<h4>Peers:</h4>
+	                                    <h4>Seeds:</h4>
+                                   </div>
+                                    
+                                    
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    
+                    
+                </div>
+                 <!-- /. ROW  -->
+                 
+                 <div class="row">
+                
+
+            	</div>
+                   
+                 <!-- /. ROW  -->           
+    			</div>
+             <!-- /. PAGE INNER  -->
+            </div>
+         <!-- /. PAGE WRAPPER  -->
+        </div>
+        
+        <div class="modal fade" role="dialog" id="default-path-modal">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-header" id="modal-header">
+				Default Path
+			</div>
+			<div class="modal-content">
+				<div class="modal-body">
+					<b>Paste your default path</b>
+					<input type="text" class="form-control" placeholder="" id="resource-url" autofocus="">
+				</div>
+			<div class="modal-footer" id="modal-submit">
+				<button class="btn btn-success" id="resource-submit" data-dismiss="modal">Submit</button>
+				<button class="btn btn-danger"  data-dismiss="modal">Cancel</button>
+			</div>
+			</div>
+		</div>
+	</div>
+     
+    <script src="assets/js/bootstrap.min.js"></script>
+</body>
+</html>
