@@ -18,6 +18,7 @@ package com.p2p.peercds.common;
 import com.p2p.peercds.bcodec.BDecoder;
 import com.p2p.peercds.bcodec.BEValue;
 import com.p2p.peercds.bcodec.BEncoder;
+import com.p2p.peercds.client.peer.CloudPeer;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -70,6 +71,7 @@ import org.slf4j.LoggerFactory;
  * @author mpetazzoni
  * @see <a href="http://wiki.theory.org/BitTorrentSpecification#Metainfo_File_Structure">Torrent meta-info file structure specification</a>
  */
+
 public class Torrent {
 
 	private static final Logger logger =
@@ -600,6 +602,7 @@ public class Torrent {
 	private static Torrent create(File parent, List<File> files, URI announce,
 			List<List<URI>> announceList, String createdBy)
 			throws InterruptedException, IOException {
+		MessageDigest md = DigestUtils.getSha1Digest();
 		if (files == null || files.isEmpty()) {
 			logger.info("Creating single-file torrent for {}...",
 				parent.getName());
@@ -656,11 +659,20 @@ public class Torrent {
 				fileInfo.add(new BEValue(fileMap));
 			}
 			info.put("files", new BEValue(fileInfo));
-			info.put("pieces", new BEValue(Torrent.hashFiles(files),
-				Torrent.BYTE_ENCODING));
+			BEValue piecesValue = new BEValue(Torrent.hashFiles(files),
+					Torrent.BYTE_ENCODING);
+			info.put("pieces", piecesValue);
+			
 		}
+		
+		TreeMap<String, BEValue> sortInfoMap = new TreeMap<String, BEValue>();
+		sortInfoMap.putAll(info);
+		info = new HashMap<String, BEValue>();
+		info.putAll(sortInfoMap);
+		sortInfoMap = null;
+		
 		torrent.put("info", new BEValue(info));
-		MessageDigest md = DigestUtils.getSha1Digest();
+					
 		md.update(torrent.get("info").getMap().get("pieces").getBytes());
 		byte[] digest = md.digest();
 		byte[] transformedDigest = new byte[digest.length];
@@ -676,7 +688,20 @@ public class Torrent {
 		}
 		System.out.println("digest str "+new String(digest));
 		System.out.println("transformed digest str "+new String(transformedDigest));
-		String cloudKey = new String(transformedDigest);
+		String cloudKeyForFile = new String(transformedDigest);
+		
+		System.out.println("Cloud Key: "+cloudKeyForFile);
+		CloudPeer cloudPeer = new CloudPeer();
+		cloudPeer.uploadTorrent("peercds", cloudKeyForFile, parent);
+		
+		torrent.put("cloud key", new BEValue(cloudKeyForFile));
+		
+		TreeMap<String, BEValue> sortTorrentMap = new TreeMap<String, BEValue>();
+		sortTorrentMap.putAll(torrent);
+		torrent = new HashMap<String, BEValue>();
+		torrent.putAll(sortTorrentMap);
+		sortTorrentMap = null;
+		
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		BEncoder.bencode(new BEValue(torrent), baos);
 		return new Torrent(baos.toByteArray(), true);
