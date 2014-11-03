@@ -32,7 +32,7 @@ body {
     margin:10px 20px 10px 0px;
     background-color:#fff!important;
     padding:10px;
-    min-height:1200px;
+    min-height:900px;
 }
 
 .text-center {
@@ -56,44 +56,48 @@ border-radius: 0px;
 }
 p {
     font-size:16px;
-    line-height:25px;
-    padding-top:20px;
+    line-height:20px;
+    padding:10px;
 }
 /*==============================================
    DASHBOARD STYLES    
     =============================================*/
 .panel-back {
-    background-color:#F8F8F8;
+    /* background-color:#F8F8F8; */
+    background-color:#D1D0CE;
+    padding:5px;
 
 }
 
 .noti-box {
-	min-height: 70px;
-	padding: 20px;
+	min-height:40px;
+	/* padding: 15px; */
 	cursor: pointer;
 }
 
 .noti-box .icon-box {
 	display: block;
 	float: left;
-	margin: 0 15px 10px 0;
-	width: 50px;
-	height: 50px;
-	line-height: 35px;
+	margin: 0 16px 0px 0;
+	width: 35px;
+	height: 35px;
+	line-height: 18px;
 	vertical-align: middle;
 	text-align: center;
 	font-size: 40px;
+	margin-top:5px;
 }
 
 .noti-box .icon-box > i{
-	font-size:20px;
+	font-size:13px;
 }
 .text-box p{
-    margin: 0 0 3px;
+    margin: 0 0 4px;
 }
 .main-text {
-    font-size: 25px;
+    font-size: 20px;
     font-weight:600;
+    margin-top:5px;
 }
 .set-icon {
     -webkit-border-radius: 50px;
@@ -363,9 +367,8 @@ line-height: 1.428571429;
  
  @media(min-width:768px) {
      #page-wrapper{
-               margin: 0 0 0 260px;
+		margin: 0 0 0 260px;
         padding: 15px 30px;
-        min-height: 1200px;
 		
     }
 	
@@ -484,4 +487,42 @@ body{
 #downloads_panel{
 	margin-left:200px;
 	width:100%;
+}
+
+.col-md-3.col-sm-6.col-xs-4{
+	/* background-color:#D1D0CE; */
+}
+
+#app-dashboard{
+	margin-left:10px;
+}
+
+th{
+	text-align:center;
+}
+
+td{
+	cursor:pointer;
+	text-align:center;
+	padding:5px;
+}
+
+
+#torrent-info-body{
+	height:300px;
+}
+
+#torrent-info-body.tab-content{
+	display:none;
+}
+
+/* #info-tabs#home > {
+	display:none;
+} */
+
+.info{
+	margin:25px;
+}
+.info > span{
+	margin:10px;
 }

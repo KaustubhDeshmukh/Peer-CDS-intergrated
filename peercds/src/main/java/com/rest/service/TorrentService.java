@@ -146,10 +146,10 @@ public class TorrentService {
 		metadata.setEta("12 min");
 		metadata.setFileName("abc.txt");
 		metadata.setPeers("50");
-		metadata.setProgress("40%");
+		metadata.setProgress("40");
 		metadata.setSeeds("10");
 		metadata.setSize("40GB");
-		metadata.setStatus("Sharing");
+		metadata.setStatus("Downloading");
 		metadata.setUploadSpeed("20kbps");
 		responselist.add(metadata);
 		
@@ -158,12 +158,24 @@ public class TorrentService {
 		metadata2.setEta("6 min");
 		metadata2.setFileName("qwerty.txt");
 		metadata2.setPeers("40");
-		metadata2.setProgress("80%");
+		metadata2.setProgress("80");
 		metadata2.setSeeds("20");
 		metadata2.setSize("80GB");
 		metadata2.setStatus("Seeding");
 		metadata2.setUploadSpeed("40kbps");
 		responselist.add(metadata2);
+		
+		MonitorResponseMapper metadata3 = new MonitorResponseMapper();
+		metadata3.setDownloadSpeed("80kbps");
+		metadata3.setEta("4 min");
+		metadata3.setFileName("random.txt");
+		metadata3.setPeers("60");
+		metadata3.setProgress("20");
+		metadata3.setSeeds("20");
+		metadata3.setSize("3GB");
+		metadata3.setStatus("Seeding");
+		metadata3.setUploadSpeed("40kbps");
+		responselist.add(metadata3);
 		
 		try {
 			responseString = mapper.writeValueAsString(responselist);

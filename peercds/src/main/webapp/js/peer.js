@@ -1,14 +1,43 @@
+	peerApi.getTorrents();
+//	peerApi.setDefaultDirectory();
+	peerApi.getDefaultDirectory();
+
+	
+	/*torrent object*/
+	
+	var myobject={
+		getCurrentTorrentInfo:function(res){
+			myobject.currentFile=res;
+		},
+		currentFile:""
+	};
+	
+	$('#torrent-info').hide();
+	$('#page-wrapper').click(function(e){
+		$('#torrent-info').hide();
+		e.stopPropagation();
+	});
+
 $(function(){
 
-	$.ajax({
-		url:"http://192.168.200.20:8080/ttorrent/service/getDefaultDirectory",
-		type:"GET",
-		success:function(res){
-			console.log(res);
-		},
-		error:function(){
-			
+	$("#torrent_table").on('click','#torrent-rows > tr',function(e){
+		$('#torrent-info').show();
+		var files=myobject.currentFile;
+		$('#torrent-rows > tr').removeClass('info');
+		var active_row=$(this).attr('id');
+		if(active_row!==""){
+			$('#'+active_row).removeClass('info');
 		}
+		$('#'+active_row).addClass('info');
+
+		var seeds=files[active_row].seeds;
+		var peers=files[active_row].peers;
+		var status=files[active_row].status;
+		
+		$("#home").find("#status").html(status);
+		$("#home").find("#peers_count").html(peers);
+		$("#home").find("#seeds_count").html(seeds);
+		e.stopPropagation();
 	});
 			
 	$('#default-path').click(function(){
@@ -35,10 +64,8 @@ $(function(){
 		
 	});
 
-	$('tr').click(function(){
-		var status=$(this).find('td.downloading').html();
-		$('.status').html(status);
-	});  
+	
+	  
     
     $('li').click(function(){
   		$('#main-menu li').each(function(){
