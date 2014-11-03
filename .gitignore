@@ -46,7 +46,7 @@ Desktop.ini
 *.pydevproject
 peercds/.project
 .metadata
-bin/**
+peercds/bin/**
 tmp/**
 tmp/**/*
 *.tmp
