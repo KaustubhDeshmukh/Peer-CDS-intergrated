@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.ClasspathPropertiesFileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
@@ -40,7 +41,7 @@ public class CloudPeer {
 	public CloudPeer() {
 
 		super();
-		credentials = new ProfileCredentialsProvider().getCredentials();
+		credentials = new ClasspathPropertiesFileCredentialsProvider().getCredentials();
 		s3 = new AmazonS3Client(credentials);
 		s3.setRegion(Region.getRegion(Regions.US_WEST_2));
 
