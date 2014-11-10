@@ -28,4 +28,8 @@ interface TrackerTorrent {
 	 String getName();
 	 
 	 String getHexInfoHash();
+	 
+	 void addPeer(TrackedPeer peer);
+	 
+	 TrackedPeer removePeer(String hexPeerId);
 }

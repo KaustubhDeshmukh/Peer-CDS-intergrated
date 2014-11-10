@@ -67,6 +67,7 @@ class UntrackedTorrent implements TrackerTorrent {
 		 *
 		 * @param peer The new Peer involved with this torrent.
 		 */
+		@Override
 		public void addPeer(TrackedPeer peer) {
 			this.peers.put(peer.getHexPeerId(), peer);
 		}
@@ -76,6 +77,7 @@ class UntrackedTorrent implements TrackerTorrent {
 		 *
 		 * @param peerId The hexadecimal representation of the peer's ID.
 		 */
+		@Override
 		public TrackedPeer getPeer(String peerId) {
 			return this.peers.get(peerId);
 		}
@@ -85,6 +87,7 @@ class UntrackedTorrent implements TrackerTorrent {
 		 *
 		 * @param peerId The hexadecimal representation of the peer's ID.
 		 */
+		@Override
 		public TrackedPeer removePeer(String peerId) {
 			return this.peers.remove(peerId);
 		}
@@ -93,6 +96,7 @@ class UntrackedTorrent implements TrackerTorrent {
 		 * Count the number of seeders (peers in the COMPLETED state) on this
 		 * torrent.
 		 */
+		@Override
 		public int seeders() {
 			int count = 0;
 			for (TrackedPeer peer : this.peers.values()) {
@@ -106,6 +110,7 @@ class UntrackedTorrent implements TrackerTorrent {
 		/**
 		 * Count the number of leechers (non-COMPLETED peers) on this torrent.
 		 */
+		@Override
 		public int leechers() {
 			int count = 0;
 			for (TrackedPeer peer : this.peers.values()) {
@@ -124,6 +129,7 @@ class UntrackedTorrent implements TrackerTorrent {
 		 * usually called by the periodic peer collector of the BitTorrent tracker.
 		 * </p>
 		 */
+		@Override
 		public void collectUnfreshPeers() {
 			for (TrackedPeer peer : this.peers.values()) {
 				if (!peer.isFresh()) {
@@ -135,6 +141,7 @@ class UntrackedTorrent implements TrackerTorrent {
 		/**
 		 * Get the announce interval for this torrent.
 		 */
+		@Override
 		public int getAnnounceInterval() {
 			return this.announceInterval;
 		}
@@ -171,33 +178,21 @@ class UntrackedTorrent implements TrackerTorrent {
 		 * @param left The peer's reported left to download byte count.
 		 * @return The peer that sent us the announce request.
 		 */
+		@Override
 		public TrackedPeer update(RequestEvent event, ByteBuffer peerId,
-			String hexPeerId, String ip, int port, long uploaded, long downloaded,
-			long left) throws UnsupportedEncodingException {
-			TrackedPeer peer;
-			TrackedPeer.PeerState state = TrackedPeer.PeerState.UNKNOWN;
-
-			if (RequestEvent.STARTED.equals(event)) {
-				peer = new TrackedPeer(this, ip, port, peerId);
-				state = TrackedPeer.PeerState.STARTED;
-				this.addPeer(peer);
-			} else if (RequestEvent.STOPPED.equals(event)) {
-				peer = this.removePeer(hexPeerId);
-				state = TrackedPeer.PeerState.STOPPED;
-			} else if (RequestEvent.COMPLETED.equals(event)) {
-				peer = this.getPeer(hexPeerId);
-				state = TrackedPeer.PeerState.COMPLETED;
-			} else if (RequestEvent.NONE.equals(event)) {
-				peer = this.getPeer(hexPeerId);
-				state = TrackedPeer.PeerState.STARTED;
-			} else {
-				throw new IllegalArgumentException("Unexpected announce event type!");
+				String hexPeerId, String ip, int port, long uploaded, long downloaded,
+				long left) throws UnsupportedEncodingException {
+				
+				TrackedPeer peer = null;
+				
+				try{
+					peer = TrackerHelper.processAnnounceEvent(this, event, peerId, hexPeerId, ip, port, uploaded, downloaded, left);
+				}catch(Exception e){
+					logger.error("Exception while processing the announce event from client: "+ip, e);
+				}
+			
+				return peer;
 			}
-
-			peer.update(state, uploaded, downloaded, left);
-			return peer;
-		}
-
 		/**
 		 * Get a list of peers we can return in an announce response for this
 		 * torrent.
@@ -206,43 +201,13 @@ class UntrackedTorrent implements TrackerTorrent {
 		 * list of returned peers.
 		 * @return A list of peers we can include in an announce response.
 		 */
+		@Override
 		public List<Peer> getSomePeers(TrackedPeer peer) {
 			List<Peer> peers = new LinkedList<Peer>();
-
-			// Extract answerPeers random peers
-			List<TrackedPeer> candidates =
-				new LinkedList<TrackedPeer>(this.peers.values());
-			Collections.shuffle(candidates);
-
-			int count = 0;
-			for (TrackedPeer candidate : candidates) {
-				// Collect unfresh peers, and obviously don't serve them as well.
-				if (!candidate.isFresh() ||
-					(candidate.looksLike(peer) && !candidate.equals(peer))) {
-					logger.debug("Collecting stale peer {}...", candidate);
-					this.peers.remove(candidate.getHexPeerId());
-					continue;
-				}
-
-				// Don't include the requesting peer in the answer.
-				if (peer.looksLike(candidate)) {
-					continue;
-				}
-
-				// Collect unfresh peers, and obviously don't serve them as well.
-				if (!candidate.isFresh()) {
-					logger.debug("Collecting stale peer {}...",
-						candidate.getHexPeerId());
-					this.peers.remove(candidate.getHexPeerId());
-					continue;
-				}
-
-				// Only serve at most ANSWER_NUM_PEERS peers
-				if (count++ > this.answerPeers) {
-					break;
-				}
-
-				peers.add(candidate);
+			try{
+				peers = TrackerHelper.selectPeers(this.peers, peer, this.answerPeers);
+			}catch(Exception e){
+				logger.error("Exception while selecting peers for announce response", e);
 			}
 
 			return peers;
