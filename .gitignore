@@ -45,6 +45,7 @@ Desktop.ini
  
 *.pydevproject
 peercds/.project
+peercds/src/main/resources/AwsCredentials.properties
 .metadata
 peercds/bin/**
 tmp/**
