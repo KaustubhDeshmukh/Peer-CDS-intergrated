@@ -15,11 +15,6 @@
  */
 package com.p2p.peercds.tracker;
 
-import com.p2p.peercds.bcodec.BEValue;
-import com.p2p.peercds.bcodec.BEncoder;
-import com.p2p.peercds.common.protocol.TrackerMessage.*;
-import com.p2p.peercds.common.protocol.http.*;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -30,14 +25,25 @@ import java.nio.channels.WritableByteChannel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 import org.simpleframework.http.Status;
 import org.simpleframework.http.core.Container;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.p2p.peercds.bcodec.BEValue;
+import com.p2p.peercds.bcodec.BEncoder;
+import com.p2p.peercds.common.protocol.TrackerMessage.AnnounceRequestMessage;
+import com.p2p.peercds.common.protocol.TrackerMessage.ErrorMessage;
+import com.p2p.peercds.common.protocol.TrackerMessage.MessageValidationException;
+import com.p2p.peercds.common.protocol.http.HTTPAnnounceRequestMessage;
+import com.p2p.peercds.common.protocol.http.HTTPAnnounceResponseMessage;
+import com.p2p.peercds.common.protocol.http.HTTPTrackerErrorMessage;
 
 
 /**
@@ -74,7 +80,8 @@ public class TrackerService implements Container {
 		};
 
 	private final String version;
-	private final ConcurrentMap<String, TrackedTorrent> torrents;
+	private final ConcurrentMap<String, TrackerTorrent> torrents;
+	private static final Lock lock = new ReentrantLock(true);
 
 
 	/**
@@ -84,7 +91,7 @@ public class TrackerService implements Container {
 	 * for.
 	 */
 	TrackerService(String version,
-			ConcurrentMap<String, TrackedTorrent> torrents) {
+			ConcurrentMap<String, TrackerTorrent> torrents) {
 		this.version = version;
 		this.torrents = torrents;
 	}
@@ -101,6 +108,7 @@ public class TrackerService implements Container {
 	 * @param request The incoming HTTP request.
 	 * @param response The response object.
 	 */
+	@Override
 	public void handle(Request request, Response response) {
 		// Reject non-announce requests
 		if (!Tracker.ANNOUNCE_URL.equals(request.getPath().toString())) {
@@ -157,16 +165,34 @@ public class TrackerService implements Container {
 			return;
 		}
 
-		// The requested torrent must be announced by the tracker.
-		TrackedTorrent torrent = this.torrents.get(
+		// first check for existing torrent, if not present add a new torrent
+		
+		TrackerTorrent torrent = this.torrents.get(
 			announceRequest.getHexInfoHash());
 		if (torrent == null) {
-			logger.warn("Requested torrent hash was: {}",
-				announceRequest.getHexInfoHash());
-			this.serveError(response, body, Status.BAD_REQUEST,
-				ErrorMessage.FailureReason.UNKNOWN_TORRENT);
-			return;
+			logger.info("New Torrent announce request received. Veriyfing the event-type:");
+			if ((announceRequest.getEvent() == null ||
+					!AnnounceRequestMessage.RequestEvent.STARTED.equals(announceRequest.getEvent()))) {
+				logger.warn("New torrent must be registered with started event");
+				this.serveError(response, body, Status.BAD_REQUEST,
+						ErrorMessage.FailureReason.INVALID_EVENT);
+					return;	
+			}else{
+				logger.info("Lock grabbed to register a new torrent");
+				lock.lock();
+				if(this.torrents.get(
+						announceRequest.getHexInfoHash()) == null){
+				logger.info("Event type verified, registering newly announced torrent.");
+				 torrent = new UntrackedTorrent("NewTorrent", announceRequest.getHexInfoHash());
+				 torrents.put(announceRequest.getHexInfoHash(), torrent);
+				 logger.info("new torrent registration complete.");
+				}else
+					logger.info("Torrent already registered by someone. Skipping the registration.");
+				 lock.unlock();
+				 logger.info("torrent registration lock released");
+			}
 		}
+		
 
 		AnnounceRequestMessage.RequestEvent event = announceRequest.getEvent();
 		String peerId = announceRequest.getHexPeerId();
@@ -208,6 +234,9 @@ public class TrackerService implements Container {
 			this.serveError(response, body, Status.BAD_REQUEST,
 				ErrorMessage.FailureReason.INVALID_EVENT);
 			return;
+		}catch(Exception e){
+			this.serveError(response, body, Status.INTERNAL_SERVER_ERROR,
+					e.getMessage());
 		}
 
 		// Craft and output the answer

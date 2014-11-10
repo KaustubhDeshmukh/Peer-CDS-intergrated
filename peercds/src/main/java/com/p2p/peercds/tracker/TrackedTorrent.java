@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author mpetazzoni
  */
-public class TrackedTorrent extends Torrent {
+public class TrackedTorrent extends Torrent implements TrackerTorrent {
 
 	private static final Logger logger =
 		LoggerFactory.getLogger(TrackedTorrent.class);
@@ -109,6 +109,7 @@ public class TrackedTorrent extends Torrent {
 	 *
 	 * @param peerId The hexadecimal representation of the peer's ID.
 	 */
+	@Override
 	public TrackedPeer getPeer(String peerId) {
 		return this.peers.get(peerId);
 	}
@@ -126,6 +127,7 @@ public class TrackedTorrent extends Torrent {
 	 * Count the number of seeders (peers in the COMPLETED state) on this
 	 * torrent.
 	 */
+	@Override
 	public int seeders() {
 		int count = 0;
 		for (TrackedPeer peer : this.peers.values()) {
@@ -139,6 +141,7 @@ public class TrackedTorrent extends Torrent {
 	/**
 	 * Count the number of leechers (non-COMPLETED peers) on this torrent.
 	 */
+	@Override
 	public int leechers() {
 		int count = 0;
 		for (TrackedPeer peer : this.peers.values()) {
@@ -157,6 +160,7 @@ public class TrackedTorrent extends Torrent {
 	 * usually called by the periodic peer collector of the BitTorrent tracker.
 	 * </p>
 	 */
+	@Override
 	public void collectUnfreshPeers() {
 		for (TrackedPeer peer : this.peers.values()) {
 			if (!peer.isFresh()) {
@@ -168,6 +172,7 @@ public class TrackedTorrent extends Torrent {
 	/**
 	 * Get the announce interval for this torrent.
 	 */
+	@Override
 	public int getAnnounceInterval() {
 		return this.announceInterval;
 	}
@@ -204,6 +209,7 @@ public class TrackedTorrent extends Torrent {
 	 * @param left The peer's reported left to download byte count.
 	 * @return The peer that sent us the announce request.
 	 */
+	@Override
 	public TrackedPeer update(RequestEvent event, ByteBuffer peerId,
 		String hexPeerId, String ip, int port, long uploaded, long downloaded,
 		long left) throws UnsupportedEncodingException {
@@ -239,6 +245,7 @@ public class TrackedTorrent extends Torrent {
 	 * list of returned peers.
 	 * @return A list of peers we can include in an announce response.
 	 */
+	@Override
 	public List<Peer> getSomePeers(TrackedPeer peer) {
 		List<Peer> peers = new LinkedList<Peer>();
 

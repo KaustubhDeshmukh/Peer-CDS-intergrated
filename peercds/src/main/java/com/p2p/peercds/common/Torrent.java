@@ -686,13 +686,13 @@ public class Torrent {
 			}
 			transformedDigest[i++] = (byte) s;
 		}
-		System.out.println("digest str "+new String(digest));
-		System.out.println("transformed digest str "+new String(transformedDigest));
+//		System.out.println("digest str "+new String(digest));
+//		System.out.println("transformed digest str "+new String(transformedDigest));
 		String cloudKeyForFile = new String(transformedDigest);
-		
-		System.out.println("Cloud Key: "+cloudKeyForFile);
-		CloudPeer cloudPeer = new CloudPeer();
-		cloudPeer.uploadTorrent("peercds", cloudKeyForFile, parent);
+//		
+//		System.out.println("Cloud Key: "+cloudKeyForFile);
+//		CloudPeer cloudPeer = new CloudPeer();
+//		cloudPeer.uploadTorrent("peercds", cloudKeyForFile, parent);
 		
 		torrent.put("cloud key", new BEValue(cloudKeyForFile));
 		
