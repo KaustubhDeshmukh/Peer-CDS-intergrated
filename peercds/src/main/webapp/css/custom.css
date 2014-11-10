@@ -368,8 +368,7 @@ line-height: 1.428571429;
  @media(min-width:768px) {
      #page-wrapper{
 		margin: 0 0 0 260px;
-        padding: 15px 30px;
-		
+        padding: 15px 30px;		
     }
 	
 	
@@ -393,7 +392,7 @@ li{
 }
 
 #torrent-list{
-	width:750px;
+	width:850px;
 }
 
 #torrent-info{
@@ -403,7 +402,8 @@ li{
 }
 
 .col-md-9.col-sm-12.col-xs-12{
-	width:800px;
+	width:900px;
+	margin:0px;
 }
 
 #torrent-list .panel-heading{
@@ -526,3 +526,4 @@ td{
 .info > span{
 	margin:10px;
 }
+
