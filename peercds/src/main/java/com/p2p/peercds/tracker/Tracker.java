@@ -63,7 +63,7 @@ public class Tracker {
 	private final InetSocketAddress address;
 
 	/** The in-memory repository of torrents tracked. */
-	private final ConcurrentMap<String, TrackedTorrent> torrents;
+	private final ConcurrentMap<String, TrackerTorrent> torrents;
 
 	private Thread tracker;
 	private Thread collector;
@@ -105,7 +105,7 @@ public class Tracker {
 		throws IOException {
 		this.address = address;
 
-		this.torrents = new ConcurrentHashMap<String, TrackedTorrent>();
+		this.torrents = new ConcurrentHashMap<String, TrackerTorrent>();
 		this.connection = new SocketConnection(
 				new TrackerService(version, this.torrents));
 	}
@@ -174,7 +174,7 @@ public class Tracker {
 	/**
 	 * Returns the list of tracker's torrents
 	 */
-	public Collection<TrackedTorrent> getTrackedTorrents() {
+	public Collection<TrackerTorrent> getTrackedTorrents() {
 		return torrents.values();
 	}
 
@@ -193,8 +193,8 @@ public class Tracker {
 	 * different from the supplied Torrent object if the tracker already
 	 * contained a torrent with the same hash.
 	 */
-	public synchronized TrackedTorrent announce(TrackedTorrent torrent) {
-		TrackedTorrent existing = this.torrents.get(torrent.getHexInfoHash());
+	public synchronized TrackerTorrent announce(TrackerTorrent torrent) {
+		TrackerTorrent existing =  this.torrents.get(torrent.getHexInfoHash());
 
 		if (existing != null) {
 			logger.warn("Tracker already announced torrent for '{}' " +
@@ -303,7 +303,7 @@ public class Tracker {
 				getAnnounceUrl());
 
 			while (!stop) {
-				for (TrackedTorrent torrent : torrents.values()) {
+				for (TrackerTorrent torrent : torrents.values()) {
 					torrent.collectUnfreshPeers();
 				}
 

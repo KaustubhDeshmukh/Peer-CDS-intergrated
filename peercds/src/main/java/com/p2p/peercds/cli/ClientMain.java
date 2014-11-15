@@ -87,7 +87,7 @@ public class ClientMain {
 		if (localhost instanceof Inet4Address) {
 			return (Inet4Address)localhost;
 		}
-
+		logger.info("No IPv4 address found for initialization of the client, address associated with localhost is: "+localhost.getHostAddress());
 		throw new UnsupportedAddressTypeException();
 	}
 

@@ -159,8 +159,6 @@ public class BDecoder {
 
 		c = this.read();
 		int i = c - '0';
-		System.out.println("c in decoding "+c);
-		System.out.println("i in decoding "+i);
 		while (i >= 0 && i <= 9) {
 			// This can overflow!
 			num = num*10 + i;
