@@ -35,15 +35,20 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.eventbus.AsyncEventBus;
 import com.p2p.peercds.client.announce.Announce;
 import com.p2p.peercds.client.announce.AnnounceException;
 import com.p2p.peercds.client.announce.AnnounceResponseListener;
 import com.p2p.peercds.client.peer.PeerActivityListener;
 import com.p2p.peercds.client.peer.SharingPeer;
+import com.p2p.peercds.common.CloudFetchEvent;
 import com.p2p.peercds.common.Peer;
 import com.p2p.peercds.common.protocol.PeerMessage;
 import com.p2p.peercds.common.protocol.TrackerMessage;
@@ -102,16 +107,15 @@ public class Client extends Observable implements Runnable,
 	private SharedTorrent torrent;
 	private ClientState state;
 	private Peer self;
-
 	private Thread thread;
 	private boolean stop;
 	private long seed;
-
 	private ConnectionHandler service;
 	private Announce announce;
 	private ConcurrentMap<String, SharingPeer> peers;
 	private ConcurrentMap<String, SharingPeer> connected;
-
+	private AsyncEventBus eventBus;
+	private Lock lock;
 	private Random random;
 
 	/**
@@ -120,7 +124,7 @@ public class Client extends Observable implements Runnable,
 	 * @param address The address to bind to.
 	 * @param torrent The torrent to download and share.
 	 */
-	public Client(InetAddress address, SharedTorrent torrent)
+	public Client(InetAddress address, SharedTorrent torrent ,Lock lock , AsyncEventBus eventBus)
 		throws UnknownHostException, IOException {
 		this.torrent = torrent;
 		this.state = ClientState.WAITING;
@@ -153,6 +157,8 @@ public class Client extends Observable implements Runnable,
 				this.self.getPort()
 			});
 
+		this.lock = lock;
+		this.eventBus = eventBus;
 		this.peers = new ConcurrentHashMap<String, SharingPeer>();
 		this.connected = new ConcurrentHashMap<String, SharingPeer>();
 		this.random = new Random(System.currentTimeMillis());
@@ -384,6 +390,12 @@ public class Client extends Observable implements Runnable,
 			} catch (Exception e) {
 				logger.error("An exception occurred during the BitTorrent " +
 						"client main loop execution!", e);
+			}
+			
+			try{
+				eventBus.post(new CloudFetchEvent());
+			}catch(Exception e){
+				logger.error("Exception while posting the cloud fetch event" ,e);
 			}
 
 			try {

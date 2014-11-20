@@ -15,8 +15,7 @@
  */
 package com.p2p.peercds.cli;
 
-import com.p2p.peercds.client.Client;
-import com.p2p.peercds.client.SharedTorrent;
+import jargs.gnu.CmdLineParser;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -27,14 +26,20 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.Enumeration;
-
-import jargs.gnu.CmdLineParser;
+import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.PatternLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.eventbus.AsyncEventBus;
+import com.p2p.peercds.client.Client;
+import com.p2p.peercds.client.SharedTorrent;
+import com.p2p.peercds.common.CloudEventHandler;
 
 /**
  * Command-line entry-point for starting a {@link Client}
@@ -151,11 +156,15 @@ public class ClientMain {
 		}
 
 		try {
+			Lock lock = new ReentrantLock();
+			AsyncEventBus eventBus = new AsyncEventBus("cloudEventBus", Executors.newFixedThreadPool(5));
+			CloudEventHandler handler = new CloudEventHandler(lock, eventBus, null);
 			Client c = new Client(
 				getIPv4Address(ifaceValue),
 				SharedTorrent.fromFile(
 					new File(otherArgs[0]),
-					new File(outputValue)));
+					new File(outputValue)), lock , eventBus);
+
 
 			c.setMaxDownloadRate(maxDownloadRate);
 			c.setMaxUploadRate(maxUploadRate);
