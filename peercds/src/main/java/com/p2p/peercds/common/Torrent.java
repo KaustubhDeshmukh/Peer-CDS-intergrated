@@ -695,9 +695,9 @@ public class Torrent {
 			transformedDigest[i++] = (byte) s;
 		}
 		for(byte b:transformedDigest)
-			System.out.println(b);
-		System.out.println("digest str "+new String(digest));
-		System.out.println("transformed digest str "+new String(transformedDigest));
+			logger.debug(new Byte(b).toString());
+		logger.info("digest str "+new String(digest));
+		logger.info("transformed digest str "+new String(transformedDigest));
 		logger.info("Replacing special characters in the cloud key with regular characters");
 		String cloudKeyForFile = new String(transformedDigest,"UTF-8");
 		for( String nsChar :  SPECIAL_TO_NSP_MAP.keySet()){
@@ -705,10 +705,7 @@ public class Torrent {
 				cloudKeyForFile = cloudKeyForFile.replaceAll(java.util.regex.Pattern.quote(nsChar), SPECIAL_TO_NSP_MAP.get(nsChar));
 		}
 	
-		System.out.println("Sanitized cloud Key: "+cloudKeyForFile);
-		System.out.println(cloudKeyForFile.contains("\\p{C}"));
-		System.out.println(cloudKeyForFile.contains("\r"));
-		System.out.println(cloudKeyForFile.contains("\n"));
+		logger.info("Sanitized cloud Key: "+cloudKeyForFile);
 		boolean success = CloudHelper.uploadTorrent(BUCKET_NAME, cloudKeyForFile.trim(), parent);
 		if(!success)
 			logger.info("File won't be uploaded to cloud as file is present in swarm and uploaded to cloud");

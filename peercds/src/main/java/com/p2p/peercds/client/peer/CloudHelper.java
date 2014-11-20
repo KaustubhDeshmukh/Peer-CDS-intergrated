@@ -5,9 +5,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.amazonaws.auth.BasicAWSCredentials;
+
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
@@ -33,10 +35,7 @@ public class CloudHelper {
 
 	static {
 
-		BasicAWSCredentials awsCreds = new BasicAWSCredentials(
-				"",
-				"");
-		s3 = new AmazonS3Client(awsCreds);
+		s3 = new AmazonS3Client(new DefaultAWSCredentialsProviderChain());
 		s3.setRegion(Region.getRegion(Regions.US_EAST_1));
 		manager = new TransferManager(s3);
 
@@ -44,9 +43,9 @@ public class CloudHelper {
 
 	public static void main(String args[]) throws Exception {
 
-		System.out.println("===========================================");
-		System.out.println("Getting Started with Amazon S3");
-		System.out.println("===========================================\n");
+		logger.info("===========================================");
+		logger.info("Getting Started with Amazon S3");
+		logger.info("===========================================\n");
 
 		File file = new File("/Users/kaustubh/Desktop/bike-to-office.pdf");
 		uploadTorrent("peer-cds", "R0dcvBQPBEADa6BQAQT", file);
@@ -60,9 +59,9 @@ public class CloudHelper {
 		boolean fileExists = false;
 
 		if (!s3.doesBucketExist(bucketName)) {
-			System.out.println("Creating bucket " + bucketName);
+			logger.info("Creating bucket " + bucketName);
 			s3.createBucket(bucketName);
-			System.out.println("bucket created");
+			logger.info("bucket created");
 		}
 
 		ObjectListing listObjects = s3.listObjects(bucketName, key);
@@ -82,7 +81,7 @@ public class CloudHelper {
 				try {
 					uploadDirectory.waitForCompletion();
 				} catch (Exception e) {
-					System.out.println("Exception while uploading a directory: "+sourceFile.getName()+" to the cloud");
+					logger.info("Exception while uploading a directory: "+sourceFile.getName()+" to the cloud");
 					e.printStackTrace();
 					throw new RuntimeException("Unable to upload directory "+sourceFile.getName()+"to the cloud: Reason: "+e.getMessage());
 				} 
@@ -133,7 +132,7 @@ public class CloudHelper {
 			throw new S3ObjectNotFoundException("No object with key: " + key
 					+ " in the bucket: " + bucketName + " can be found");
 		else {
-			System.out.println(objectSummaries.size()
+			logger.info(objectSummaries.size()
 					+ " objects found with the key: " + key + " in bucket "
 					+ bucketName);
 //			if (objectSummaries.size() > 1)
@@ -157,7 +156,7 @@ public class CloudHelper {
 				throw new IllegalArgumentException(
 						"startByteIndex should be smaller than endByteIndex to fetch the legitimate data bytes");
 			else {
-				System.out.println("Fetching " + length
+				logger.info("Fetching " + length
 						+ " bytes data of a piece from S3");
 				req.setRange(startByteIndex, endByteIndex);
 			}
@@ -171,17 +170,17 @@ public class CloudHelper {
 		ByteBuffer buffer = ByteBuffer.allocate((int) length);
 		byte[] holder = new byte[(int) length];
 		S3Object piece = s3.getObject(req);
-		System.out.println("Downloading a piece of size " + (length / 1024)
+		logger.info("Downloading a piece of size " + (length / 1024)
 				+ "kb from cloud for content type: "
 				+ piece.getObjectMetadata().getContentType());
 
 		int rem = 0;
 		for (rem = piece.getObjectContent().read(holder); rem != -1; rem = piece
 				.getObjectContent().read(holder)) {
-			System.out.println("fetched: "+rem+" bytes from cloud for key: "+key);
+			logger.info("fetched: "+rem+" bytes from cloud for key: "+key);
 			buffer.put(Arrays.copyOfRange(holder, 0, rem));
 		}
-		System.out.println("Total bytes read from cloud: " + buffer.position()
+		logger.info("Total bytes read from cloud: " + buffer.position()
 				+ " for key: " + key);
 
 		if (buffer.position() != length)
