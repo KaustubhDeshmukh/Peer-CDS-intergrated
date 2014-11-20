@@ -1,49 +1,42 @@
 package com.p2p.peercds.client.peer;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.UUID;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.ClasspathPropertiesFileCredentialsProvider;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
-import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
 import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
-import com.p2p.peercds.common.Torrent;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.p2p.peercds.common.S3ObjectNotFoundException;
+import com.p2p.peercds.common.TruncatedPieceReadException;
+
 
 public class CloudPeer {
 
 	private static final Logger logger =
 			LoggerFactory.getLogger(CloudPeer.class);
 
-	private AWSCredentials credentials = null;
-	private AmazonS3 s3 = null;
+	
+	private static  AmazonS3 s3 = null;
 
-	public CloudPeer() {
+	static {
 
-		super();
-		credentials = new ClasspathPropertiesFileCredentialsProvider().getCredentials();
-		s3 = new AmazonS3Client(credentials);
-		s3.setRegion(Region.getRegion(Regions.US_WEST_2));
+		BasicAWSCredentials awsCreds = new BasicAWSCredentials("", "");
+		s3 = new AmazonS3Client(awsCreds);
+		s3.setRegion(Region.getRegion(Regions.US_EAST_1));
 
 	}
 
@@ -52,44 +45,30 @@ public class CloudPeer {
 		System.out.println("===========================================");
 		System.out.println("Getting Started with Amazon S3");
 		System.out.println("===========================================\n");
+		
+		File file = new File("/Users/kaustubh/Desktop/mfile/abc.pdf");
+		uploadTorrent("peercds", "multifile1", file);
+		downloadPiece("peercds", "multifile1");
 
 	}
 
-	private static void displayTextInputStream(InputStream input) throws IOException {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-		while (true) {
-			String line = reader.readLine();
-			if (line == null) break;
 
-			System.out.println("    " + line);
-		}
-		System.out.println();
-	}
+	public static void uploadTorrent(String bucketName, String key, File sourceFile){
 
-	public void uploadTorrent(String bucketName, String key, File sourceFile){
-
-		boolean fileexists = false;
-		System.out.println("Creating bucket " + bucketName + "\n");
-
+		boolean fileExists = false;
+		
 		if(!s3.doesBucketExist(bucketName)){
+			System.out.println("Creating bucket " + bucketName + "\n");
 			s3.createBucket(bucketName);
 			System.out.println("bucket created");
 		}
 
-		try{
-			GetObjectMetadataRequest r = new GetObjectMetadataRequest(bucketName, key);
-			ObjectMetadata metadata= s3.getObjectMetadata(r);
-			fileexists = true;
-		} catch(AmazonS3Exception e){
-			if (e.getStatusCode() == 404) {	        
-				fileexists = false;
-			}
-			else {
-				throw e;   
-			}
-		}
+		ObjectListing listObjects = s3.listObjects(bucketName, key);
+		List<S3ObjectSummary> objectSummaries = listObjects.getObjectSummaries();
+		if (objectSummaries.size() != 0)
+			fileExists= true;
 
-		if(!fileexists){
+		if(!fileExists){
 			
 			System.out.println("Uploading a new object to S3 from a file\n");
 			PutObjectResult result = s3.putObject(new PutObjectRequest(bucketName, key, sourceFile));
@@ -100,35 +79,59 @@ public class CloudPeer {
 			
 			System.out.println("File already exists in the cloud.. skipping upload.");
 		}
+}
+	public static byte[] downloadPiece(String bucketName, String key) throws IOException, TruncatedPieceReadException, S3ObjectNotFoundException{
 		
-//		System.out.println("Downloading torrent...");
-//		try {
-//			downloadPiece(bucketName, key, 0, 0);
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		
-//		System.out.println("Done Downloading torrent...");
+		byte[] data = downloadPiece(bucketName, key, null, null);
+		return data;
 	}
 
-	public void downloadPiece(String bucketName, String key, int startByteIndex, int endByteIndex) throws IOException{
+	public static byte[] downloadPiece(String bucketName, String key, Integer startByteIndex, Integer endByteIndex) throws IOException, TruncatedPieceReadException, S3ObjectNotFoundException{
 
-		GetObjectRequest req = new GetObjectRequest(bucketName, key);
-//		req.setRange(startByteIndex, endByteIndex);
-		S3Object object = s3.getObject(req);
-		System.out.println("Downloading an object");
-		System.out.println("Content-Type: "  + object.getObjectMetadata().getContentType());
-		System.out.println("Size: "+object.getObjectMetadata().getContentLength());
-
-		FileOutputStream opfile = new FileOutputStream(key);
-		while(true){
-
-			int nxt = object.getObjectContent().read();
-			if(nxt == -1) break;
-			opfile.write(nxt);
-
+		long length = 0;
+		
+		ObjectListing listObjects = s3.listObjects(bucketName, key);
+		List<S3ObjectSummary> objectSummaries = listObjects.getObjectSummaries();
+		if (objectSummaries.size() == 0)
+			throw new S3ObjectNotFoundException("No object with key: "+key+" in the bucket: "+bucketName+" can be found");
+		else{
+			System.out.println(objectSummaries.size()+" objects found with the key: "+key+" in bucket "+bucketName);
+			if(objectSummaries.size() > 1)
+				throw new IllegalArgumentException("More than one file is associated with the given key: "+key);
+			S3ObjectSummary s3ObjectSummary = objectSummaries.get(0);
+			length = s3ObjectSummary.getSize();
+			if(length > Integer.MAX_VALUE)
+				throw new IllegalArgumentException("Max fetch size exceeded. Consider chunking the download in parts. Max allowed size is: "+Integer.MAX_VALUE);
 		}
-		opfile.close();
+		
+		GetObjectRequest req = new GetObjectRequest(bucketName, key);
+		
+		if(startByteIndex != null && endByteIndex != null ){
+			
+		 if(startByteIndex >= endByteIndex)
+			throw new IllegalArgumentException("startByteIndex should be smaller than endByteIndex to fetch the legitimate data bytes");
+		else{
+			length = (endByteIndex-startByteIndex);
+			System.out.println("Fetching "+length+" bytes data of a piece from S3");
+			req.setRange(startByteIndex, endByteIndex);
+		}
+		}else
+			System.out.println("Range has not been provided for this download from cloud. Whole "+key +" will be downloaded from bucket: "+bucketName);
+			
+		ByteBuffer buffer =  ByteBuffer.allocate((int) length);
+		byte[] holder = new byte[(int) length];
+		S3Object piece = s3.getObject(req);
+		System.out.println("Downloading a piece of size "+(length/1024)+"kb from cloud for content type: "+piece.getObjectMetadata().getContentType());
+		
+		int rem = 0;
+		for(rem= piece.getObjectContent().read(holder) ; rem != -1 ; rem = piece.getObjectContent().read(holder)){
+		buffer.put(Arrays.copyOfRange(holder, 0, rem));
+		}
+		System.out.println("Total bytes read from cloud: "+buffer.position()+" for key: "+key);
+		
+		if(buffer.position() != length)
+			throw new TruncatedPieceReadException("Number of bytes expected to be read: "+length+". Number of bytes actually read: "+buffer.position());
+		
+		return buffer.array();
 	}
 }

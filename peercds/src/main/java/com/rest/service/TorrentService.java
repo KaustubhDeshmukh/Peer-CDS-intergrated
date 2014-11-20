@@ -1,5 +1,6 @@
 package com.rest.service;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,9 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import com.p2p.peercds.client.peer.CloudPeer;
+import com.p2p.peercds.common.S3ObjectNotFoundException;
+import com.p2p.peercds.common.TruncatedPieceReadException;
 import com.rest.service.mappers.CreateTorrentResponseMapper;
 import com.rest.service.mappers.DefaultDirectoryRequestMapper;
 import com.rest.service.mappers.GenericResponseStatusMapper;
@@ -342,10 +346,10 @@ public class TorrentService {
 	@GET
 	@Path("/view")
 	@Produces(MediaType.TEXT_HTML)
-	public Response downloadTorrent(){
-		
-		
-	        return Response.ok(new Viewable("/jsp/index.html")).build();
+	public Response downloadTorrent() throws IOException, TruncatedPieceReadException, S3ObjectNotFoundException{
+	
+		CloudPeer.downloadPiece("peercds", "multifile1");
+	        return Response.ok(new Viewable("/index.html")).build();
 	    
 	}
 }
