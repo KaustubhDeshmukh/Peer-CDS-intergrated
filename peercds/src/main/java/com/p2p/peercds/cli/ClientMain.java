@@ -163,7 +163,7 @@ public class ClientMain {
 				getIPv4Address(ifaceValue),
 				SharedTorrent.fromFile(
 					new File(otherArgs[0]),
-					new File(outputValue)), lock , eventBus);
+					new File(outputValue)), lock , eventBus , handler);
 
 
 			c.setMaxDownloadRate(maxDownloadRate);

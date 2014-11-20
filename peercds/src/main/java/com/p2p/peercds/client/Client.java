@@ -48,6 +48,7 @@ import com.p2p.peercds.client.announce.AnnounceException;
 import com.p2p.peercds.client.announce.AnnounceResponseListener;
 import com.p2p.peercds.client.peer.PeerActivityListener;
 import com.p2p.peercds.client.peer.SharingPeer;
+import com.p2p.peercds.common.CloudEventHandler;
 import com.p2p.peercds.common.CloudFetchEvent;
 import com.p2p.peercds.common.Peer;
 import com.p2p.peercds.common.protocol.PeerMessage;
@@ -117,6 +118,7 @@ public class Client extends Observable implements Runnable,
 	private AsyncEventBus eventBus;
 	private Lock lock;
 	private Random random;
+	private CloudEventHandler cloudHandler;
 
 	/**
 	 * Initialize the BitTorrent client.
@@ -124,7 +126,7 @@ public class Client extends Observable implements Runnable,
 	 * @param address The address to bind to.
 	 * @param torrent The torrent to download and share.
 	 */
-	public Client(InetAddress address, SharedTorrent torrent ,Lock lock , AsyncEventBus eventBus)
+	public Client(InetAddress address, SharedTorrent torrent ,Lock lock , AsyncEventBus eventBus , CloudEventHandler cloudHandler)
 		throws UnknownHostException, IOException {
 		this.torrent = torrent;
 		this.state = ClientState.WAITING;
@@ -162,6 +164,8 @@ public class Client extends Observable implements Runnable,
 		this.peers = new ConcurrentHashMap<String, SharingPeer>();
 		this.connected = new ConcurrentHashMap<String, SharingPeer>();
 		this.random = new Random(System.currentTimeMillis());
+		this.cloudHandler = cloudHandler;
+		cloudHandler.registerPeerActivityListener(this);
 	}
 
 	/**
