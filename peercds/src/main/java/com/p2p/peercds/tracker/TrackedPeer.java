@@ -27,7 +27,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import static com.p2p.peercds.common.Constants.*;
 
 /**
  * A BitTorrent tracker peer.
@@ -205,7 +205,7 @@ public class TrackedPeer extends Peer {
 		if (this.hasPeerId()) {
 			peer.put("peer id", new BEValue(this.getPeerId().array()));
 		}
-		peer.put("ip", new BEValue(this.getIp(), Torrent.BYTE_ENCODING));
+		peer.put("ip", new BEValue(this.getIp(), BYTE_ENCODING));
 		peer.put("port", new BEValue(this.getPort()));
 		return new BEValue(peer);
 	}

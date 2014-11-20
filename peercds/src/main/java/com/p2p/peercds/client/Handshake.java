@@ -20,7 +20,7 @@ import com.p2p.peercds.common.Torrent;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.text.ParseException;
-
+import static com.p2p.peercds.common.Constants.*;
 
 /**
  * Peer handshake handler.
@@ -71,7 +71,7 @@ public class Handshake {
 		buffer.get(pstr);
 
 		if (!Handshake.BITTORRENT_PROTOCOL_IDENTIFIER.equals(
-					new String(pstr, Torrent.BYTE_ENCODING))) {
+					new String(pstr, BYTE_ENCODING))) {
 			throw new ParseException("Invalid protocol identifier!", 1);
 		}
 
@@ -101,7 +101,7 @@ public class Handshake {
 			buffer.put((byte)Handshake
 					.BITTORRENT_PROTOCOL_IDENTIFIER.length());
 			buffer.put(Handshake
-					.BITTORRENT_PROTOCOL_IDENTIFIER.getBytes(Torrent.BYTE_ENCODING));
+					.BITTORRENT_PROTOCOL_IDENTIFIER.getBytes(BYTE_ENCODING));
 			buffer.put(reserved);
 			buffer.put(infoHash);
 			buffer.put(peerId);

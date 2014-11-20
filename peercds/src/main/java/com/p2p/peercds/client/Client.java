@@ -15,15 +15,7 @@
  */
 package com.p2p.peercds.client;
 
-import com.p2p.peercds.client.announce.Announce;
-import com.p2p.peercds.client.announce.AnnounceException;
-import com.p2p.peercds.client.announce.AnnounceResponseListener;
-import com.p2p.peercds.client.peer.PeerActivityListener;
-import com.p2p.peercds.client.peer.SharingPeer;
-import com.p2p.peercds.common.Peer;
-import com.p2p.peercds.common.Torrent;
-import com.p2p.peercds.common.protocol.PeerMessage;
-import com.p2p.peercds.common.protocol.TrackerMessage;
+import static com.p2p.peercds.common.Constants.BYTE_ENCODING;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -46,6 +38,15 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.p2p.peercds.client.announce.Announce;
+import com.p2p.peercds.client.announce.AnnounceException;
+import com.p2p.peercds.client.announce.AnnounceResponseListener;
+import com.p2p.peercds.client.peer.PeerActivityListener;
+import com.p2p.peercds.client.peer.SharingPeer;
+import com.p2p.peercds.common.Peer;
+import com.p2p.peercds.common.protocol.PeerMessage;
+import com.p2p.peercds.common.protocol.TrackerMessage;
 
 /**
  * A pure-java BitTorrent client.
@@ -136,7 +137,7 @@ public class Client extends Observable implements Runnable,
 			this.service.getSocketAddress()
 				.getAddress().getHostAddress(),
 			(short)this.service.getSocketAddress().getPort(),
-			ByteBuffer.wrap(id.getBytes(Torrent.BYTE_ENCODING)));
+			ByteBuffer.wrap(id.getBytes(BYTE_ENCODING)));
 
 		// Initialize the announce request thread, and register ourselves to it
 		// as well.

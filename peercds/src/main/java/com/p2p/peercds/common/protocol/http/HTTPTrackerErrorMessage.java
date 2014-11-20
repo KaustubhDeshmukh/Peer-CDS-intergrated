@@ -21,7 +21,7 @@ import com.p2p.peercds.bcodec.BEncoder;
 import com.p2p.peercds.bcodec.InvalidBEncodingException;
 import com.p2p.peercds.common.Torrent;
 import com.p2p.peercds.common.protocol.TrackerMessage.ErrorMessage;
-
+import static com.p2p.peercds.common.Constants.*;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -62,7 +62,7 @@ public class HTTPTrackerErrorMessage extends HTTPTrackerMessage
 			return new HTTPTrackerErrorMessage(
 				data,
 				params.get("failure reason")
-					.getString(Torrent.BYTE_ENCODING));
+					.getString(BYTE_ENCODING));
 		} catch (InvalidBEncodingException ibee) {
 			throw new MessageValidationException("Invalid tracker error " +
 				"message!", ibee);
@@ -79,7 +79,7 @@ public class HTTPTrackerErrorMessage extends HTTPTrackerMessage
 		throws IOException, MessageValidationException {
 		Map<String, BEValue> params = new HashMap<String, BEValue>();
 		params.put("failure reason",
-			new BEValue(reason, Torrent.BYTE_ENCODING));
+			new BEValue(reason, BYTE_ENCODING));
 		return new HTTPTrackerErrorMessage(
 			BEncoder.bencode(params),
 			reason);

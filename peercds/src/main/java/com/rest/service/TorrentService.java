@@ -19,7 +19,7 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import com.p2p.peercds.client.peer.CloudPeer;
+import com.p2p.peercds.client.peer.CloudHelper;
 import com.p2p.peercds.common.S3ObjectNotFoundException;
 import com.p2p.peercds.common.TruncatedPieceReadException;
 import com.rest.service.mappers.CreateTorrentResponseMapper;
@@ -348,7 +348,7 @@ public class TorrentService {
 	@Produces(MediaType.TEXT_HTML)
 	public Response downloadTorrent() throws IOException, TruncatedPieceReadException, S3ObjectNotFoundException{
 	
-		CloudPeer.downloadPiece("peercds", "multifile1");
+		CloudHelper.downloadPiece("peercds", "multifile1");
 	        return Response.ok(new Viewable("/index.html")).build();
 	    
 	}

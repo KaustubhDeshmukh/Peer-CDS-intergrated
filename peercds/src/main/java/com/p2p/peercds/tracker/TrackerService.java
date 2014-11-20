@@ -44,7 +44,7 @@ import com.p2p.peercds.common.protocol.TrackerMessage.MessageValidationException
 import com.p2p.peercds.common.protocol.http.HTTPAnnounceRequestMessage;
 import com.p2p.peercds.common.protocol.http.HTTPAnnounceResponseMessage;
 import com.p2p.peercds.common.protocol.http.HTTPTrackerErrorMessage;
-
+import static com.p2p.peercds.common.Constants.*;
 
 /**
  * Tracker service to serve the tracker's announce requests.
@@ -302,7 +302,7 @@ public class TrackerService implements Container {
 		if (params.get("ip") == null) {
 			params.put("ip", new BEValue(
 				request.getClientAddress().getAddress().getHostAddress(),
-				TrackedTorrent.BYTE_ENCODING));
+				BYTE_ENCODING));
 		}
 
 
@@ -312,7 +312,7 @@ public class TrackerService implements Container {
 	private void recordParam(Map<String, BEValue> params, String key,
 		String value) {
 		try {
-			value = URLDecoder.decode(value, TrackedTorrent.BYTE_ENCODING);
+			value = URLDecoder.decode(value, BYTE_ENCODING);
 
 			for (String f : NUMERIC_REQUEST_FIELDS) {
 				if (f.equals(key)) {
@@ -321,7 +321,7 @@ public class TrackerService implements Container {
 				}
 			}
 
-			params.put(key, new BEValue(value, TrackedTorrent.BYTE_ENCODING));
+			params.put(key, new BEValue(value, BYTE_ENCODING));
 		} catch (UnsupportedEncodingException uee) {
 			// Ignore, act like parameter was not there
 			return;

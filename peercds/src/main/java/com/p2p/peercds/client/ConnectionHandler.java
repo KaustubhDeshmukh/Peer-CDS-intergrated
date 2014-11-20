@@ -17,7 +17,7 @@ package com.p2p.peercds.client;
 
 import com.p2p.peercds.client.peer.SharingPeer;
 import com.p2p.peercds.common.Torrent;
-
+import static com.p2p.peercds.common.Constants.*;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -415,7 +415,7 @@ public class ConnectionHandler implements Runnable {
 		return channel.write(
 			Handshake.craft(
 				this.torrent.getInfoHash(),
-				this.id.getBytes(Torrent.BYTE_ENCODING)).getData());
+				this.id.getBytes(BYTE_ENCODING)).getData());
 	}
 
 	/**

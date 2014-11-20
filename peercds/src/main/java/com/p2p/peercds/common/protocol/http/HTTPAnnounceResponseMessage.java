@@ -22,7 +22,7 @@ import com.p2p.peercds.bcodec.InvalidBEncodingException;
 import com.p2p.peercds.common.Peer;
 import com.p2p.peercds.common.Torrent;
 import com.p2p.peercds.common.protocol.TrackerMessage.AnnounceResponseMessage;
-
+import static com.p2p.peercds.common.Constants.*;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
@@ -135,7 +135,7 @@ public class HTTPAnnounceResponseMessage extends HTTPTrackerMessage
 		for (BEValue peer : peers) {
 			Map<String, BEValue> peerInfo = peer.getMap();
 			result.add(new Peer(
-				peerInfo.get("ip").getString(Torrent.BYTE_ENCODING),
+				peerInfo.get("ip").getString(BYTE_ENCODING),
 				peerInfo.get("port").getInt()));
 		}
 

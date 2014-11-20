@@ -22,6 +22,7 @@ import com.p2p.peercds.bcodec.InvalidBEncodingException;
 import com.p2p.peercds.common.Peer;
 import com.p2p.peercds.common.Torrent;
 import com.p2p.peercds.common.protocol.TrackerMessage.AnnounceRequestMessage;
+import static com.p2p.peercds.common.Constants.*;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -152,12 +153,12 @@ public class HTTPAnnounceRequestMessage extends HTTPTrackerMessage
 		url.append(base.contains("?") ? "&" : "?")
 			.append("info_hash=")
 			.append(URLEncoder.encode(
-				new String(this.getInfoHash(), Torrent.BYTE_ENCODING),
-				Torrent.BYTE_ENCODING))
+				new String(this.getInfoHash(), BYTE_ENCODING),
+				BYTE_ENCODING))
 			.append("&peer_id=")
 			.append(URLEncoder.encode(
-				new String(this.getPeerId(), Torrent.BYTE_ENCODING),
-				Torrent.BYTE_ENCODING))
+				new String(this.getPeerId(), BYTE_ENCODING),
+				BYTE_ENCODING))
 			.append("&port=").append(this.getPort())
 			.append("&uploaded=").append(this.getUploaded())
 			.append("&downloaded=").append(this.getDownloaded())
@@ -243,13 +244,13 @@ public class HTTPAnnounceRequestMessage extends HTTPTrackerMessage
 
 			String ip = null;
 			if (params.containsKey("ip")) {
-				ip = params.get("ip").getString(Torrent.BYTE_ENCODING);
+				ip = params.get("ip").getString(BYTE_ENCODING);
 			}
 
 			RequestEvent event = RequestEvent.NONE;
 			if (params.containsKey("event")) {
 				event = RequestEvent.getByName(params.get("event")
-					.getString(Torrent.BYTE_ENCODING));
+					.getString(BYTE_ENCODING));
 			}
 
 			return new HTTPAnnounceRequestMessage(data, infoHash,
@@ -280,12 +281,12 @@ public class HTTPAnnounceRequestMessage extends HTTPTrackerMessage
 
 		if (event != null) {
 			params.put("event",
-				new BEValue(event.getEventName(), Torrent.BYTE_ENCODING));
+				new BEValue(event.getEventName(), BYTE_ENCODING));
 		}
 
 		if (ip != null) {
 			params.put("ip",
-				new BEValue(ip, Torrent.BYTE_ENCODING));
+				new BEValue(ip, BYTE_ENCODING));
 		}
 
 		if (numWant != AnnounceRequestMessage.DEFAULT_NUM_WANT) {
