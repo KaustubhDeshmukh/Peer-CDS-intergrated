@@ -1,4 +1,4 @@
-package com.p2p.peercds.client.peer;
+package com.p2p.peercds.common;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,8 +22,6 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.MultipleFileUpload;
 import com.amazonaws.services.s3.transfer.TransferManager;
-import com.p2p.peercds.common.S3ObjectNotFoundException;
-import com.p2p.peercds.common.TruncatedPieceReadException;
 
 public class CloudHelper {
 

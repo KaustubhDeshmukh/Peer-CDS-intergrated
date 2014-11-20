@@ -19,7 +19,7 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import com.p2p.peercds.client.peer.CloudHelper;
+import com.p2p.peercds.common.CloudHelper;
 import com.p2p.peercds.common.S3ObjectNotFoundException;
 import com.p2p.peercds.common.TruncatedPieceReadException;
 import com.rest.service.mappers.CreateTorrentResponseMapper;

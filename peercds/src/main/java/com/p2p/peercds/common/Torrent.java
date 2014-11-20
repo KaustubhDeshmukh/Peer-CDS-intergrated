@@ -59,7 +59,6 @@ import com.google.common.base.Strings;
 import com.p2p.peercds.bcodec.BDecoder;
 import com.p2p.peercds.bcodec.BEValue;
 import com.p2p.peercds.bcodec.BEncoder;
-import com.p2p.peercds.client.peer.CloudHelper;
 
 /**
  * A torrent file tracked by the controller's BitTorrent tracker.
