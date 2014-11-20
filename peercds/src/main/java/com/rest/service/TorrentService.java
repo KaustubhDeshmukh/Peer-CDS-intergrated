@@ -348,7 +348,7 @@ public class TorrentService {
 	@Produces(MediaType.TEXT_HTML)
 	public Response downloadTorrent() throws IOException, TruncatedPieceReadException, S3ObjectNotFoundException{
 	
-		CloudHelper.downloadPiece("peercds", "multifile1");
+		CloudHelper.downloadPieceFromFile("peercds", "multifile1");
 	        return Response.ok(new Viewable("/index.html")).build();
 	    
 	}

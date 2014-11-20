@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
-
+import static com.p2p.peercds.common.Constants.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +36,12 @@ public class CloudHelper {
 		s3 = new AmazonS3Client(new DefaultAWSCredentialsProviderChain());
 		s3.setRegion(Region.getRegion(Regions.US_EAST_1));
 		manager = new TransferManager(s3);
+		if (!s3.doesBucketExist(BUCKET_NAME)) {
+			logger.info("Creating bucket " + BUCKET_NAME);
+			s3.createBucket(BUCKET_NAME);
+			logger.info(BUCKET_NAME+" bucket created");
+		}
+
 
 	}
 
@@ -54,21 +60,8 @@ public class CloudHelper {
 	public static boolean uploadTorrent(String bucketName, String key,
 			File sourceFile) {
 
-		boolean fileExists = false;
-
-		if (!s3.doesBucketExist(bucketName)) {
-			logger.info("Creating bucket " + bucketName);
-			s3.createBucket(bucketName);
-			logger.info("bucket created");
-		}
-
-		ObjectListing listObjects = s3.listObjects(bucketName, key);
-		List<S3ObjectSummary> objectSummaries = listObjects
-				.getObjectSummaries();
-		if (objectSummaries.size() != 0)
-			fileExists = true;
-
-		if (!fileExists) {
+		
+		if (keyExistsInBucket(bucketName, key , null) == 0) {
 
 			if (sourceFile.isDirectory()) {
 				
@@ -98,12 +91,49 @@ public class CloudHelper {
 			return false;
 		}
 	}
+	
+	private static int keyExistsInBucket(String bucketName , String keyPrefix , List<S3ObjectSummary> objectSummaries){
+		
+		if(objectSummaries == null || objectSummaries.isEmpty())
+		objectSummaries = getKeyMetaInfoFromBucket(bucketName, keyPrefix);
+		if (objectSummaries.size() != 0)
+			return objectSummaries.size();
+		else
+			return 0;
+	}
+	
+	private static List<S3ObjectSummary> getKeyMetaInfoFromBucket(String bucketName , String keyPrefix){
+		ObjectListing listObjects = s3.listObjects(bucketName.trim(), keyPrefix.trim());
+		List<S3ObjectSummary> objectSummaries = listObjects
+				.getObjectSummaries();
+		return objectSummaries;
+	}
+	
+	public static byte[] downloadCompleteDirectory(String bucketName , String s3DirectoryPrefix) throws S3ObjectNotFoundException{
+		
+		logger.info("Complete directory download has been requested with the directory prefix: "+s3DirectoryPrefix);
+		List<S3ObjectSummary> objList = getKeyMetaInfoFromBucket(bucketName, s3DirectoryPrefix);
+		int numObjsInBucket = keyExistsInBucket(bucketName, s3DirectoryPrefix, objList);
+		if(numObjsInBucket == 0)
+			throw new S3ObjectNotFoundException("No directory with key: " + s3DirectoryPrefix
+					+ " in the bucket: " + bucketName + " can be found");
+		else{	
+		if(numObjsInBucket == 1)
+			logger.warn("Single object is associated with the directory prefix: "+s3DirectoryPrefix);
+		else
+			logger.info(numObjsInBucket+" files will be downloaded from directory: "+s3DirectoryPrefix);
+		
+		int directorySize = 0;
+		}
+		
+		return new byte[5];
+	}
 
-	public static byte[] downloadPiece(String bucketName, String key)
+	public static byte[] downloadPieceFromFile(String bucketName, String key)
 			throws IOException, TruncatedPieceReadException,
 			S3ObjectNotFoundException {
 
-		byte[] data = downloadPiece(bucketName, key, null, null);
+		byte[] data = downloadPiece(bucketName, key, null, null , false);
 		return data;
 	}
 	
@@ -114,26 +144,26 @@ public class CloudHelper {
 	 */
 
 	public static byte[] downloadPiece(String bucketName, String key,
-			Integer startByteIndex, Integer endByteIndex) throws IOException,
+			Integer startByteIndex, Integer endByteIndex , boolean isDirectoryFetch) throws IOException,
 			TruncatedPieceReadException, S3ObjectNotFoundException {
 
 		long length = 0;
-
-		ObjectListing listObjects = s3.listObjects(bucketName, key);
-		List<S3ObjectSummary> objectSummaries = listObjects
-				.getObjectSummaries();
-		if (objectSummaries.size() == 0)
+		List<S3ObjectSummary> objList = getKeyMetaInfoFromBucket(bucketName, key);
+		int numObjsInBucket = keyExistsInBucket(bucketName, key,objList);
+		if (numObjsInBucket == 0)
 			throw new S3ObjectNotFoundException("No object with key: " + key
 					+ " in the bucket: " + bucketName + " can be found");
 		else {
-			logger.info(objectSummaries.size()
+			logger.info(numObjsInBucket
 					+ " objects found with the key: " + key + " in bucket "
 					+ bucketName);
-//			if (objectSummaries.size() > 1)
-//				throw new IllegalArgumentException(
-//						"More than one file is associated with the given key: "
-//								+ key);
-			S3ObjectSummary s3ObjectSummary = objectSummaries.get(0);
+			if(!isDirectoryFetch){
+			if (numObjsInBucket > 1)
+				throw new IllegalArgumentException(
+						"More than one file is associated with the given key: "
+								+ key);
+			}
+			S3ObjectSummary s3ObjectSummary = objList.get(0);
 			length = s3ObjectSummary.getSize();
 			if (length > Integer.MAX_VALUE)
 				throw new IllegalArgumentException(
