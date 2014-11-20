@@ -166,6 +166,7 @@ public class Client extends Observable implements Runnable,
 		this.random = new Random(System.currentTimeMillis());
 		this.cloudHandler = cloudHandler;
 		cloudHandler.registerPeerActivityListener(this);
+		cloudHandler.registerPeerActivityListener(torrent);
 	}
 
 	/**
