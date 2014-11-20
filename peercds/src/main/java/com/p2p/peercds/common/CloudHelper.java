@@ -72,8 +72,7 @@ public class CloudHelper {
 
 			if (sourceFile.isDirectory()) {
 				
-				System.out
-				.println("Uploading a directory: "+sourceFile.getName()+" to cloud.");
+				logger.info("Uploading a directory: "+sourceFile.getName()+" to cloud.");
 				
 				MultipleFileUpload uploadDirectory = manager.uploadDirectory(bucketName, key, sourceFile, true);
 				try {
@@ -84,21 +83,18 @@ public class CloudHelper {
 					throw new RuntimeException("Unable to upload directory "+sourceFile.getName()+"to the cloud: Reason: "+e.getMessage());
 				} 
 				
-				System.out
-				.println("Directory: "+sourceFile.getName()+" has been uploaded successfully to the cloud.");
+				logger.info("Directory: "+sourceFile.getName()+" has been uploaded successfully to the cloud.");
 				return true;
 
 			} else {
-				System.out
-						.println("Uploading a single file: "+sourceFile.getName()+" to cloud.");
+				logger.info("Uploading a single file: "+sourceFile.getName()+" to cloud.");
 				PutObjectResult result = s3.putObject(new PutObjectRequest(
 						bucketName, key, sourceFile));
 				return true;
 			}
 		} else {
 
-			System.out
-					.println("File already exists in the cloud.. skipping upload.");
+			logger.info("File already exists in the cloud.. skipping upload.");
 			return false;
 		}
 	}
@@ -159,8 +155,7 @@ public class CloudHelper {
 				req.setRange(startByteIndex, endByteIndex);
 			}
 		} else
-			System.out
-					.println("Range has not been provided for this download from cloud. Whole "
+			logger.info("Range has not been provided for this download from cloud. Whole "
 							+ key
 							+ " will be downloaded from bucket: "
 							+ bucketName);
