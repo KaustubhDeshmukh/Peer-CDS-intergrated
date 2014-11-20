@@ -25,6 +25,7 @@ public class Constants {
 			.put("#", "I").put(".", "J").put("/", "K").put("!", "L")
 			.put("@", "M").put("*", "N").put("+", "O").put("%", "P")
 			.put("^", "Q").put("<", "R").put(">", "S").put("_", "T")
-			.put(" ", "U").put("\t", "V").put("\r", "W").put("\n", "X").put("\\p{C}", "Y").build();
+			.put(" ", "U").put("[", "V").put("]", "W").put("{", "X")
+			.put("}", "Y").build();
 
 }
