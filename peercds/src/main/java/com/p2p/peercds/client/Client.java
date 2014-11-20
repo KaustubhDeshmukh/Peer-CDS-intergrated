@@ -393,7 +393,7 @@ public class Client extends Observable implements Runnable,
 			}
 			
 			try{
-				eventBus.post(new CloudFetchEvent());
+				eventBus.post(new CloudFetchEvent(connected));
 			}catch(Exception e){
 				logger.error("Exception while posting the cloud fetch event" ,e);
 			}

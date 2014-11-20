@@ -18,15 +18,11 @@ public class CloudEventHandler {
 	private  Lock lock;
 	
 	private  AsyncEventBus eventBus;
-	
-	private  ConcurrentMap<String, SharingPeer> connectedPeersMap;
 
-	public CloudEventHandler(Lock lock, AsyncEventBus eventBus,
-			ConcurrentMap<String, SharingPeer> connectedPeersMap) {
+	public CloudEventHandler(Lock lock, AsyncEventBus eventBus) {
 		super();
 		this.lock = lock;
 		this.eventBus = eventBus;
-		this.connectedPeersMap = connectedPeersMap;
 		eventBus.register(this);
 	}
 	
@@ -34,6 +30,8 @@ public class CloudEventHandler {
 	public void fetchMissingPiecesFromCloud(CloudFetchEvent event){
 		logger.info("Handling cloud piece fetch event");
 		lock.lock();
+		ConcurrentMap<String, SharingPeer> connected = event.getConnected();
+		logger.info("Number of peers connected for this torrent: "+connected.size());
 		lock.unlock();
 		logger.info("Cloud piece fetch event handling complete");
 	}
