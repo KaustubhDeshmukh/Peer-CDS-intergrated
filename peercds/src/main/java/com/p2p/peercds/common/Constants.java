@@ -27,5 +27,7 @@ public class Constants {
 			.put("^", "Q").put("<", "R").put(">", "S").put("_", "T")
 			.put(" ", "U").put("[", "V").put("]", "W").put("{", "X")
 			.put("}", "Y").build();
+	
+	public static final String DIRECTORY_RANGE_FETCH_KEY_FORMAT = "%s/%s";
 
 }

@@ -2,6 +2,7 @@ package com.p2p.peercds.common;
 
 import static com.p2p.peercds.common.Constants.BUCKET_NAME;
 import static com.p2p.peercds.common.Constants.PIECE_LENGTH;
+import static com.p2p.peercds.common.Constants.DIRECTORY_RANGE_FETCH_KEY_FORMAT;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -29,6 +30,7 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.MultipleFileDownload;
 import com.amazonaws.services.s3.transfer.MultipleFileUpload;
 import com.amazonaws.services.s3.transfer.TransferManager;
+import com.google.common.base.Strings;
 
 public class CloudHelper {
 
@@ -37,7 +39,7 @@ public class CloudHelper {
 
 	private static AmazonS3 s3 = null;
 	private static TransferManager manager = null;
-	private static FilenameFilter hiddenFilesFilter = new FilenameFilter() {
+	private static final FilenameFilter hiddenFilesFilter = new FilenameFilter() {
 		public boolean accept(File dir, String name) {
 			String lowercaseName = name.toLowerCase();
 			if (!lowercaseName.startsWith(".")) {
@@ -56,9 +58,8 @@ public class CloudHelper {
 		if (!s3.doesBucketExist(BUCKET_NAME)) {
 			logger.info("Creating bucket " + BUCKET_NAME);
 			s3.createBucket(BUCKET_NAME);
-			logger.info(BUCKET_NAME+" bucket created");
+			logger.info(BUCKET_NAME + " bucket created");
 		}
-
 
 	}
 
@@ -70,35 +71,52 @@ public class CloudHelper {
 
 		File file = new File("/Users/kaustubh/Desktop/mfile");
 		uploadTorrent("peer-cds", "mfile1", file);
-		//downloadPiece("peer-cds", "mfile1/abc.pdf" , 10 , 11, false);
-		downloadCompleteDirectory(BUCKET_NAME, "mfile");
+		// downloadPiece("peer-cds", "mfile1/abc.pdf" , 10 , 11, false);
+		//downloadCompleteDirectory(BUCKET_NAME, "mfile");
+		downloadByteRangeFromDirectory(BUCKET_NAME, "mfile", "abc.pdf", 0, 117143);
 
 	}
 
 	public static boolean uploadTorrent(String bucketName, String key,
 			File sourceFile) throws S3FetchException {
 
-		
-		if (keyExistsInBucket(bucketName, key , null) == 0) {
+		if (Strings.isNullOrEmpty(bucketName) || Strings.isNullOrEmpty(key)
+				|| sourceFile == null || !sourceFile.exists())
+			throw new IllegalArgumentException(
+					"bucket-nam , file-key and file can not be empty or null");
+		else {
+			bucketName = bucketName.trim();
+			key = key.trim();
+		}
+
+		if (keyExistsInBucket(bucketName, key, null) == 0) {
 
 			if (sourceFile.isDirectory()) {
-				
-				logger.info("Uploading a directory: "+sourceFile.getName()+" to cloud.");
+
+				logger.info("Uploading a directory: " + sourceFile.getName()
+						+ " to cloud.");
 				File[] listFiles = sourceFile.listFiles(hiddenFilesFilter);
-				//MultipleFileUpload uploadDirectory = manager.uploadDirectory(bucketName, key, sourceFile, true);
-				MultipleFileUpload uploadDirectory = manager.uploadFileList(bucketName, key, sourceFile, Arrays.asList(listFiles));
+				// MultipleFileUpload uploadDirectory =
+				// manager.uploadDirectory(bucketName, key, sourceFile, true);
+				MultipleFileUpload uploadDirectory = manager.uploadFileList(
+						bucketName, key, sourceFile, Arrays.asList(listFiles));
 				try {
 					uploadDirectory.waitForCompletion();
 				} catch (Exception e) {
-					logger.error("Exception while uploading a directory: "+sourceFile.getName()+" to the cloud",e);
-					throw new S3FetchException("Unable to upload directory "+sourceFile.getName()+"to the cloud: Reason: "+e.getMessage());
-				} 
-				
-				logger.info("Directory: "+sourceFile.getName()+" has been uploaded successfully to the cloud.");
+					logger.error("Exception while uploading a directory: "
+							+ sourceFile.getName() + " to the cloud", e);
+					throw new S3FetchException("Unable to upload directory "
+							+ sourceFile.getName() + "to the cloud: Reason: "
+							+ e.getMessage());
+				}
+
+				logger.info("Directory: " + sourceFile.getName()
+						+ " has been uploaded successfully to the cloud.");
 				return true;
 
 			} else {
-				logger.info("Uploading a single file: "+sourceFile.getName()+" to cloud.");
+				logger.info("Uploading a single file: " + sourceFile.getName()
+						+ " to cloud.");
 				PutObjectResult result = s3.putObject(new PutObjectRequest(
 						bucketName, key, sourceFile));
 				return true;
@@ -109,127 +127,263 @@ public class CloudHelper {
 			return false;
 		}
 	}
-	
-	private static int keyExistsInBucket(String bucketName , String keyPrefix , List<S3ObjectSummary> objectSummaries){
-		
-		if(objectSummaries == null || objectSummaries.isEmpty())
-		objectSummaries = getKeyMetaInfoFromBucket(bucketName, keyPrefix);
-		if (objectSummaries.size() != 0)
-			return objectSummaries.size();
-		else
-			return 0;
+
+	private static int keyExistsInBucket(String bucketName, String keyPrefix,
+			List<S3ObjectSummary> objectSummaries) {
+
+		if (objectSummaries == null || objectSummaries.isEmpty())
+			objectSummaries = getKeyMetaInfoFromBucket(bucketName, keyPrefix);
+		return objectSummaries.size();
 	}
-	
-	private static List<S3ObjectSummary> getKeyMetaInfoFromBucket(String bucketName , String keyPrefix){
-		ObjectListing listObjects = s3.listObjects(bucketName.trim(), keyPrefix.trim());
+
+	private static List<S3ObjectSummary> getKeyMetaInfoFromBucket(
+			String bucketName, String keyPrefix) {
+		ObjectListing listObjects = s3.listObjects(bucketName.trim(),
+				keyPrefix.trim());
 		List<S3ObjectSummary> objectSummaries = listObjects
 				.getObjectSummaries();
 		return objectSummaries;
 	}
-	
-	public static byte[] downloadCompleteDirectory(String bucketName , String s3DirectoryPrefix) throws S3ObjectNotFoundException, FetchSizeExceededException, S3FetchException, TruncatedPieceReadException{
-		
-		logger.info("Complete directory download has been requested with the directory prefix: "+s3DirectoryPrefix);
-		List<S3ObjectSummary> objList = getKeyMetaInfoFromBucket(bucketName, s3DirectoryPrefix);
-		int numObjsInBucket = keyExistsInBucket(bucketName, s3DirectoryPrefix, objList);
-		if(numObjsInBucket == 0)
-			throw new S3ObjectNotFoundException("No directory with key: " + s3DirectoryPrefix
-					+ " in the bucket: " + bucketName + " can be found");
-		else{	
-		if(numObjsInBucket == 1)
-			logger.warn("Single object is associated with the directory prefix: "+s3DirectoryPrefix);
-		else
-			logger.info(numObjsInBucket+" files will be downloaded from directory: "+s3DirectoryPrefix);
-		
-		int directorySize = 0;
-		
-		for(S3ObjectSummary obj : objList)
-			directorySize = (int) (directorySize +obj.getSize());
-		
-		if(directorySize > PIECE_LENGTH *1024)
-			throw new FetchSizeExceededException("Max fetch size exceeded. Consider chunking the download in parts. Max allowed size is: "
-					+ Integer.MAX_VALUE);
-		
-		logger.info(directorySize+"bytes of data will be downloaded from cloud for directory: "+s3DirectoryPrefix);
-		logger.info(Math.ceil(directorySize/1024)+"kb of data will be downloaded from cloud for directory: "+s3DirectoryPrefix);
-		
-		ByteBuffer holder = ByteBuffer.allocate(directorySize);
-		File tmp = new File("tmp/");
-		MultipleFileDownload ddf = manager.downloadDirectory(bucketName, s3DirectoryPrefix, tmp);
-		try {
-			ddf.waitForCompletion();
-		} catch (Exception e) {
-			logger.error("Exception while waiting for the directory download to complete for directory: "+s3DirectoryPrefix, e);
-			throw new S3FetchException("Exception while waiting for the directory download to complete for directory: "+s3DirectoryPrefix);
-		} 		
-		try {
-			File actual = new File(tmp, s3DirectoryPrefix);
-			for(File file: actual.listFiles()){
-			RandomAccessFile raf = new RandomAccessFile(file, "r");
-			FileChannel channel = raf.getChannel();
-			channel.read(holder);
-			channel.close();
+
+	public static byte[] downloadCompleteDirectory(String bucketName,
+			String s3DirectoryPrefix) throws S3ObjectNotFoundException,
+			FetchSizeExceededException, S3FetchException,
+			TruncatedPieceReadException {
+
+		logger.info("Complete directory download has been requested with the directory prefix: "
+				+ s3DirectoryPrefix);
+		if (Strings.isNullOrEmpty(bucketName)
+				|| Strings.isNullOrEmpty(s3DirectoryPrefix))
+			throw new IllegalArgumentException(
+					"bucket-nam , directory-prefix and file-name can not be empty or null");
+		else {
+			bucketName = bucketName.trim();
+			s3DirectoryPrefix = s3DirectoryPrefix.trim();
+		}
+		List<S3ObjectSummary> objList = getKeyMetaInfoFromBucket(bucketName,
+				s3DirectoryPrefix);
+		int numObjsInBucket = keyExistsInBucket(bucketName, s3DirectoryPrefix,
+				objList);
+		if (numObjsInBucket == 0)
+			throw new S3ObjectNotFoundException("No directory with key: "
+					+ s3DirectoryPrefix + " in the bucket: " + bucketName
+					+ " can be found");
+		else {
+			if (numObjsInBucket == 1)
+				logger.warn("Single object is associated with the directory prefix: "
+						+ s3DirectoryPrefix);
+			else
+				logger.info(numObjsInBucket
+						+ " files will be downloaded from directory: "
+						+ s3DirectoryPrefix);
+
+			int directorySize = 0;
+
+			for (S3ObjectSummary obj : objList)
+				directorySize = (int) (directorySize + obj.getSize());
+
+			if (directorySize > PIECE_LENGTH * 1024)
+				throw new FetchSizeExceededException(
+						"Max fetch size exceeded. Consider chunking the download in parts. Max allowed size is: "
+								+ Integer.MAX_VALUE);
+
+			logger.info(directorySize
+					+ "bytes of data will be downloaded from cloud for directory: "
+					+ s3DirectoryPrefix);
+			logger.info(Math.ceil(directorySize / 1024)
+					+ "kb of data will be downloaded from cloud for directory: "
+					+ s3DirectoryPrefix);
+
+			ByteBuffer holder = ByteBuffer.allocate(directorySize);
+			File tmp = new File("tmp/");
+			MultipleFileDownload ddf = manager.downloadDirectory(bucketName,
+					s3DirectoryPrefix, tmp);
+			try {
+				ddf.waitForCompletion();
+			} catch (Exception e) {
+				logger.error(
+						"Exception while waiting for the directory download to complete for directory: "
+								+ s3DirectoryPrefix, e);
+				throw new S3FetchException(
+						"Exception while waiting for the directory download to complete for directory: "
+								+ s3DirectoryPrefix);
 			}
-		} catch (Exception e) {
-			logger.error("Exception while reading the downloaded directory  with key "+s3DirectoryPrefix, e);
-			throw new S3FetchException("Exception while waiting for the directory download to complete for directory: "+s3DirectoryPrefix);
+			try {
+				File actual = new File(tmp, s3DirectoryPrefix);
+				for (File file : actual.listFiles()) {
+					RandomAccessFile raf = new RandomAccessFile(file, "r");
+					FileChannel channel = raf.getChannel();
+					channel.read(holder);
+					channel.close();
+				}
+			} catch (Exception e) {
+				logger.error(
+						"Exception while reading the downloaded directory  with key "
+								+ s3DirectoryPrefix, e);
+				throw new S3FetchException(
+						"Exception while waiting for the directory download to complete for directory: "
+								+ s3DirectoryPrefix);
+			}
+			if (holder.limit() != directorySize)
+				throw new TruncatedPieceReadException(
+						"Number of bytes expected to be read: " + directorySize
+								+ ". Number of bytes actually read: "
+								+ holder.limit());
+			logger.info("Directory: "
+					+ s3DirectoryPrefix
+					+ " has been downloaded from the cloud. Returning the byte contents in array");
+			return holder.array();
 		}
-		if (holder.limit() != directorySize)
-			throw new TruncatedPieceReadException(
-					"Number of bytes expected to be read: " + directorySize
-							+ ". Number of bytes actually read: "
-							+ holder.limit());
-		logger.info("Directory: "+s3DirectoryPrefix+" has been downloaded from the cloud. Returning the byte contents in array");
-		return  holder.array();
+	}
+
+	public static byte[] downloadByteRangeFromDirectory(String bucketName,
+			String s3DirectoryPrefix, String fileName, Integer offset,
+			Integer length) throws S3ObjectNotFoundException,
+			FetchSizeExceededException, S3FetchException,
+			TruncatedPieceReadException {
+
+		if (offset == null || length == null)
+			throw new IllegalArgumentException(
+					"Offset and length must be specified to download the byte range from cloud");
+
+		if (offset < 0 || length < 0)
+			throw new IllegalArgumentException(
+					"Offset and length can not be less than zero");
+
+		if (length > PIECE_LENGTH * 1024)
+			throw new FetchSizeExceededException(
+					"Max fetch size exceeded. Consider chunking the download in parts. Max allowed size is piece size: "
+							+ PIECE_LENGTH * 1024+"bytes, "+PIECE_LENGTH+" kb");
+
+		if (Strings.isNullOrEmpty(bucketName)
+				|| Strings.isNullOrEmpty(s3DirectoryPrefix)
+				|| Strings.isNullOrEmpty(fileName))
+			throw new IllegalArgumentException(
+					"bucket-nam , directory-prefix and file-name can not be empty or null");
+		else {
+			bucketName = bucketName.trim();
+			s3DirectoryPrefix = s3DirectoryPrefix.trim();
+			fileName = fileName.trim();
 		}
+
+		List<S3ObjectSummary> keyMetaInfoFromBucket = getKeyMetaInfoFromBucket(
+				bucketName, s3DirectoryPrefix);
+
+		if (keyExistsInBucket(bucketName, s3DirectoryPrefix,
+				keyMetaInfoFromBucket) == 0)
+			throw new S3ObjectNotFoundException("Directory: "
+					+ s3DirectoryPrefix + " does not exists in the cloud");
+
+		keyMetaInfoFromBucket = getKeyMetaInfoFromBucket(bucketName,
+				String.format(DIRECTORY_RANGE_FETCH_KEY_FORMAT, s3DirectoryPrefix,
+						fileName));
+
+		if (keyExistsInBucket(bucketName, String.format(
+				DIRECTORY_RANGE_FETCH_KEY_FORMAT, bucketName, fileName), keyMetaInfoFromBucket) == 0)
+			throw new S3ObjectNotFoundException("Directory: "
+					+ s3DirectoryPrefix + " does not contain file: " + fileName
+					+ "in the cloud");
+
+		if (keyMetaInfoFromBucket.size() > 1)
+			throw new S3ObjectNotFoundException("Directory: "
+					+ s3DirectoryPrefix + " has more than 1 file matching : "
+					+ fileName + "in the cloud");
+
+		S3ObjectSummary s3ObjectSummary = keyMetaInfoFromBucket.get(0);
+
+		if (s3ObjectSummary.getSize() < length)
+			throw new IllegalArgumentException(
+					"Requested object is smaller than the length of data expected: Requested object size: "
+							+ s3ObjectSummary.getSize()
+							+ ". Requested number of bytes: "
+							+ length
+							+ ". Object key: "
+							+ String.format(DIRECTORY_RANGE_FETCH_KEY_FORMAT,
+									s3DirectoryPrefix, fileName));
+
+		if (s3ObjectSummary.getSize() < (offset + length) - 1)
+			throw new IllegalArgumentException(
+					"Requested object is smaller than the length of data expected: Requested object size: "
+							+ s3ObjectSummary.getSize()
+							+ ". Requested number of bytes: "
+							+ (offset + length - 1)
+							+ ". Object key: "
+							+ String.format(DIRECTORY_RANGE_FETCH_KEY_FORMAT,
+									s3DirectoryPrefix, fileName));
+
+		byte[] data = downloadPiece(bucketName, String.format(
+				DIRECTORY_RANGE_FETCH_KEY_FORMAT, s3DirectoryPrefix, fileName),
+				offset, offset + length, true);
+
+		return data;
 	}
 
 	public static byte[] downloadPieceFromFile(String bucketName, String key)
-			throws TruncatedPieceReadException,
-			S3ObjectNotFoundException, FetchSizeExceededException, S3FetchException {
+			throws TruncatedPieceReadException, S3ObjectNotFoundException,
+			FetchSizeExceededException, S3FetchException {
 
-		byte[] data = downloadPiece(bucketName, key, null, null , false);
+		if (Strings.isNullOrEmpty(bucketName) || Strings.isNullOrEmpty(key))
+			throw new IllegalArgumentException(
+					"bucket-name , and file-key can not be empty or null");
+		else {
+			bucketName = bucketName.trim();
+			key = key.trim();
+		}
+
+		byte[] data = downloadPiece(bucketName, key, null, null, false);
 		return data;
 	}
-	
+
 	/*
-	 * endByteIndex is exclusive
-	 * byte index in S3 also starts from 0 
-	 * Range set in get request of S3 has both the endpoints inclusive
+	 * endByteIndex is exclusive byte index in S3 also starts from 0 Range set
+	 * in get request of S3 has both the endpoints inclusive
 	 */
 
 	public static byte[] downloadPiece(String bucketName, String key,
-			Integer startByteIndex, Integer endByteIndex , boolean isDirectoryFetch) throws			TruncatedPieceReadException, S3ObjectNotFoundException, FetchSizeExceededException, S3FetchException {
+			Integer startByteIndex, Integer endByteIndex,
+			boolean isDirectoryFetch) throws TruncatedPieceReadException,
+			S3ObjectNotFoundException, FetchSizeExceededException,
+			S3FetchException {
+
+		if (Strings.isNullOrEmpty(bucketName) || Strings.isNullOrEmpty(key))
+			throw new IllegalArgumentException(
+					"bucket-name , and file-key can not be empty or null");
+		else {
+			bucketName = bucketName.trim();
+			key = key.trim();
+		}
 
 		long length = 0;
-		List<S3ObjectSummary> objList = getKeyMetaInfoFromBucket(bucketName, key);
-		int numObjsInBucket = keyExistsInBucket(bucketName, key,objList);
+		List<S3ObjectSummary> objList = getKeyMetaInfoFromBucket(bucketName,
+				key);
+		int numObjsInBucket = keyExistsInBucket(bucketName, key, objList);
 		if (numObjsInBucket == 0)
 			throw new S3ObjectNotFoundException("No object with key: " + key
 					+ " in the bucket: " + bucketName + " can be found");
 		else {
-			logger.info(numObjsInBucket
-					+ " objects found with the key: " + key + " in bucket "
-					+ bucketName);
-			if(!isDirectoryFetch){
-			if (numObjsInBucket > 1)
-				throw new IllegalArgumentException(
-						"More than one file is associated with the given key: "
-								+ key);
+			logger.info(numObjsInBucket + " objects found with the key: " + key
+					+ " in bucket " + bucketName);
+			if (!isDirectoryFetch) {
+				if (numObjsInBucket > 1)
+					throw new IllegalArgumentException(
+							"More than one file is associated with the given key: "
+									+ key);
 			}
 			S3ObjectSummary s3ObjectSummary = objList.get(0);
 			length = s3ObjectSummary.getSize();
-			if (length > Integer.MAX_VALUE)
-				throw new FetchSizeExceededException(
-						"Max fetch size exceeded. Consider chunking the download in parts. Max allowed size is: "
-								+ Integer.MAX_VALUE);
 		}
 
 		GetObjectRequest req = new GetObjectRequest(bucketName, key);
 
 		if (startByteIndex != null && endByteIndex != null) {
-			length = (endByteIndex - startByteIndex); // This is placed before decrementing the endIndex to accurately calculate the number of bytes to be fetched
-			endByteIndex = endByteIndex -1; // This is to make endByteIndex exclusive
+			length = (endByteIndex - startByteIndex); // This is placed before
+														// decrementing the
+														// endIndex to
+														// accurately calculate
+														// the number of bytes
+														// to be fetched
+			endByteIndex = endByteIndex - 1; // This is to make endByteIndex
+												// exclusive
 			if (startByteIndex > endByteIndex)
 				throw new IllegalArgumentException(
 						"startByteIndex should be smaller than endByteIndex to fetch the legitimate data bytes");
@@ -240,10 +394,12 @@ public class CloudHelper {
 			}
 		} else
 			logger.info("Range has not been provided for this download from cloud. Whole "
-							+ key
-							+ " will be downloaded from bucket: "
-							+ bucketName);
+					+ key + " will be downloaded from bucket: " + bucketName);
 
+		if (length > PIECE_LENGTH * 1024)
+			throw new FetchSizeExceededException(
+					"Max fetch size exceeded. Consider chunking the download in parts. Max allowed size is piece size: "
+							+ PIECE_LENGTH * 1024+"bytes, "+PIECE_LENGTH+" kb");
 		ByteBuffer buffer = ByteBuffer.allocate((int) length);
 		byte[] holder = new byte[(int) length];
 		S3Object piece = s3.getObject(req);
@@ -252,16 +408,20 @@ public class CloudHelper {
 				+ piece.getObjectMetadata().getContentType());
 
 		int rem = 0;
-		
+
 		try {
 			for (rem = piece.getObjectContent().read(holder); rem != -1; rem = piece
 					.getObjectContent().read(holder)) {
-				logger.info("fetched: "+rem+" bytes from cloud for key: "+key);
+				logger.info("fetched: " + rem + " bytes from cloud for key: "
+						+ key);
 				buffer.put(Arrays.copyOfRange(holder, 0, rem));
 			}
 		} catch (IOException e) {
-			logger.error("IOException while fetching the data from cloud for key: "+key,e);
-			throw new S3FetchException("Exception occurred while fetching the data from the cloud");
+			logger.error(
+					"IOException while fetching the data from cloud for key: "
+							+ key, e);
+			throw new S3FetchException(
+					"Exception occurred while fetching the data from the cloud");
 		}
 		logger.info("Total bytes read from cloud: " + buffer.position()
 				+ " for key: " + key);
