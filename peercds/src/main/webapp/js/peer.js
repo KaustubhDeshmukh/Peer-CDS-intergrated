@@ -1,28 +1,46 @@
-	peerApi.getTorrents();
-//	peerApi.setDefaultDirectory();
-	peerApi.getDefaultDirectory();
+	function timer(){
+		var status=myobject.status;
+		console.log('calling all');
+		peerApi.getTorrents(status);
+	}
 
+	peerApi.getDefaultDirectory();
 	
 	/*torrent object*/
 	
 	var myobject={
+		status:"all",
 		getCurrentTorrentInfo:function(res){
 			myobject.currentFile=res;
 		},
-		currentFile:""
+		currentFile:"",
+		selectedFile:""
 	};
+	console.log('selected is'+myobject.selectedFile);
 	
 	$('#torrent-info').hide();
 	$('#page-wrapper').click(function(e){
 		$('#torrent-info').hide();
+		$('#torrent-rows > tr').removeClass('info');
+		myobject.selectedFile="";
+		e.stopPropagation();
+	});
+	$('body').click(function(e){
+		$('#torrent-info').hide();
+		$('#torrent-rows > tr').removeClass('info');
+		myobject.selectedFile="";
 		e.stopPropagation();
 	});
 
 $(function(){
-
+	timer();
+	setInterval(timer, 3000);
 	$("#torrent_table").on('click','#torrent-rows > tr',function(e){
 		$('#torrent-info').show();
 		var files=myobject.currentFile;
+		myobject.selectedFile=$(this).attr('id');
+		console.log(myobject.selectedFile);
+		
 		$('#torrent-rows > tr').removeClass('info');
 		var active_row=$(this).attr('id');
 		if(active_row!==""){
@@ -76,6 +94,24 @@ $(function(){
     	
     	$(this).children().addClass("active-menu");
     	// console.log($(this).children().addClass('active-menu'));
+    });
+    
+    $('#downloading_files').click(function(){
+    	myobject.status='downloading';
+    	setInterval(timer, 3000);
+    	timer();
+    });
+    
+    $('#seeding_files').click(function(){
+    	myobject.status='seeding';
+    	setInterval(timer, 3000);
+    	timer();
+    });
+    
+    $('#all_files').click(function(){
+    	myobject.status='all';
+    	setInterval(timer, 3000);
+    	timer();
     });
     
 });
