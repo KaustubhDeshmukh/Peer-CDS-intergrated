@@ -1,11 +1,17 @@
 package com.p2p.peercds.common;
 
+import static com.p2p.peercds.common.Constants.BUCKET_NAME;
+import static com.p2p.peercds.common.Constants.PIECE_LENGTH;
+
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.List;
-import static com.p2p.peercds.common.Constants.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +26,7 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.transfer.MultipleFileDownload;
 import com.amazonaws.services.s3.transfer.MultipleFileUpload;
 import com.amazonaws.services.s3.transfer.TransferManager;
 
@@ -30,6 +37,16 @@ public class CloudHelper {
 
 	private static AmazonS3 s3 = null;
 	private static TransferManager manager = null;
+	private static FilenameFilter hiddenFilesFilter = new FilenameFilter() {
+		public boolean accept(File dir, String name) {
+			String lowercaseName = name.toLowerCase();
+			if (!lowercaseName.startsWith(".")) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+	};
 
 	static {
 
@@ -51,14 +68,15 @@ public class CloudHelper {
 		logger.info("Getting Started with Amazon S3");
 		logger.info("===========================================\n");
 
-		File file = new File("/Users/kaustubh/Desktop/bike-to-office.pdf");
-		uploadTorrent("peer-cds", "R0dcvBQPBEADa6BQAQT", file);
-		//downloadPiece("peercds", "mfile/abc.pdf" , 10 , 11);
+		File file = new File("/Users/kaustubh/Desktop/mfile");
+		uploadTorrent("peer-cds", "mfile1", file);
+		//downloadPiece("peer-cds", "mfile1/abc.pdf" , 10 , 11, false);
+		downloadCompleteDirectory(BUCKET_NAME, "mfile");
 
 	}
 
 	public static boolean uploadTorrent(String bucketName, String key,
-			File sourceFile) {
+			File sourceFile) throws S3FetchException {
 
 		
 		if (keyExistsInBucket(bucketName, key , null) == 0) {
@@ -66,14 +84,14 @@ public class CloudHelper {
 			if (sourceFile.isDirectory()) {
 				
 				logger.info("Uploading a directory: "+sourceFile.getName()+" to cloud.");
-				
-				MultipleFileUpload uploadDirectory = manager.uploadDirectory(bucketName, key, sourceFile, true);
+				File[] listFiles = sourceFile.listFiles(hiddenFilesFilter);
+				//MultipleFileUpload uploadDirectory = manager.uploadDirectory(bucketName, key, sourceFile, true);
+				MultipleFileUpload uploadDirectory = manager.uploadFileList(bucketName, key, sourceFile, Arrays.asList(listFiles));
 				try {
 					uploadDirectory.waitForCompletion();
 				} catch (Exception e) {
-					logger.info("Exception while uploading a directory: "+sourceFile.getName()+" to the cloud");
-					e.printStackTrace();
-					throw new RuntimeException("Unable to upload directory "+sourceFile.getName()+"to the cloud: Reason: "+e.getMessage());
+					logger.error("Exception while uploading a directory: "+sourceFile.getName()+" to the cloud",e);
+					throw new S3FetchException("Unable to upload directory "+sourceFile.getName()+"to the cloud: Reason: "+e.getMessage());
 				} 
 				
 				logger.info("Directory: "+sourceFile.getName()+" has been uploaded successfully to the cloud.");
@@ -109,7 +127,7 @@ public class CloudHelper {
 		return objectSummaries;
 	}
 	
-	public static byte[] downloadCompleteDirectory(String bucketName , String s3DirectoryPrefix) throws S3ObjectNotFoundException{
+	public static byte[] downloadCompleteDirectory(String bucketName , String s3DirectoryPrefix) throws S3ObjectNotFoundException, FetchSizeExceededException, S3FetchException, TruncatedPieceReadException{
 		
 		logger.info("Complete directory download has been requested with the directory prefix: "+s3DirectoryPrefix);
 		List<S3ObjectSummary> objList = getKeyMetaInfoFromBucket(bucketName, s3DirectoryPrefix);
@@ -124,14 +142,51 @@ public class CloudHelper {
 			logger.info(numObjsInBucket+" files will be downloaded from directory: "+s3DirectoryPrefix);
 		
 		int directorySize = 0;
-		}
 		
-		return new byte[5];
+		for(S3ObjectSummary obj : objList)
+			directorySize = (int) (directorySize +obj.getSize());
+		
+		if(directorySize > PIECE_LENGTH *1024)
+			throw new FetchSizeExceededException("Max fetch size exceeded. Consider chunking the download in parts. Max allowed size is: "
+					+ Integer.MAX_VALUE);
+		
+		logger.info(directorySize+"bytes of data will be downloaded from cloud for directory: "+s3DirectoryPrefix);
+		logger.info(Math.ceil(directorySize/1024)+"kb of data will be downloaded from cloud for directory: "+s3DirectoryPrefix);
+		
+		ByteBuffer holder = ByteBuffer.allocate(directorySize);
+		File tmp = new File("tmp/");
+		MultipleFileDownload ddf = manager.downloadDirectory(bucketName, s3DirectoryPrefix, tmp);
+		try {
+			ddf.waitForCompletion();
+		} catch (Exception e) {
+			logger.error("Exception while waiting for the directory download to complete for directory: "+s3DirectoryPrefix, e);
+			throw new S3FetchException("Exception while waiting for the directory download to complete for directory: "+s3DirectoryPrefix);
+		} 		
+		try {
+			File actual = new File(tmp, s3DirectoryPrefix);
+			for(File file: actual.listFiles()){
+			RandomAccessFile raf = new RandomAccessFile(file, "r");
+			FileChannel channel = raf.getChannel();
+			channel.read(holder);
+			channel.close();
+			}
+		} catch (Exception e) {
+			logger.error("Exception while reading the downloaded directory  with key "+s3DirectoryPrefix, e);
+			throw new S3FetchException("Exception while waiting for the directory download to complete for directory: "+s3DirectoryPrefix);
+		}
+		if (holder.limit() != directorySize)
+			throw new TruncatedPieceReadException(
+					"Number of bytes expected to be read: " + directorySize
+							+ ". Number of bytes actually read: "
+							+ holder.limit());
+		logger.info("Directory: "+s3DirectoryPrefix+" has been downloaded from the cloud. Returning the byte contents in array");
+		return  holder.array();
+		}
 	}
 
 	public static byte[] downloadPieceFromFile(String bucketName, String key)
-			throws IOException, TruncatedPieceReadException,
-			S3ObjectNotFoundException {
+			throws TruncatedPieceReadException,
+			S3ObjectNotFoundException, FetchSizeExceededException, S3FetchException {
 
 		byte[] data = downloadPiece(bucketName, key, null, null , false);
 		return data;
@@ -144,8 +199,7 @@ public class CloudHelper {
 	 */
 
 	public static byte[] downloadPiece(String bucketName, String key,
-			Integer startByteIndex, Integer endByteIndex , boolean isDirectoryFetch) throws IOException,
-			TruncatedPieceReadException, S3ObjectNotFoundException {
+			Integer startByteIndex, Integer endByteIndex , boolean isDirectoryFetch) throws			TruncatedPieceReadException, S3ObjectNotFoundException, FetchSizeExceededException, S3FetchException {
 
 		long length = 0;
 		List<S3ObjectSummary> objList = getKeyMetaInfoFromBucket(bucketName, key);
@@ -166,7 +220,7 @@ public class CloudHelper {
 			S3ObjectSummary s3ObjectSummary = objList.get(0);
 			length = s3ObjectSummary.getSize();
 			if (length > Integer.MAX_VALUE)
-				throw new IllegalArgumentException(
+				throw new FetchSizeExceededException(
 						"Max fetch size exceeded. Consider chunking the download in parts. Max allowed size is: "
 								+ Integer.MAX_VALUE);
 		}
@@ -198,10 +252,16 @@ public class CloudHelper {
 				+ piece.getObjectMetadata().getContentType());
 
 		int rem = 0;
-		for (rem = piece.getObjectContent().read(holder); rem != -1; rem = piece
-				.getObjectContent().read(holder)) {
-			logger.info("fetched: "+rem+" bytes from cloud for key: "+key);
-			buffer.put(Arrays.copyOfRange(holder, 0, rem));
+		
+		try {
+			for (rem = piece.getObjectContent().read(holder); rem != -1; rem = piece
+					.getObjectContent().read(holder)) {
+				logger.info("fetched: "+rem+" bytes from cloud for key: "+key);
+				buffer.put(Arrays.copyOfRange(holder, 0, rem));
+			}
+		} catch (IOException e) {
+			logger.error("IOException while fetching the data from cloud for key: "+key,e);
+			throw new S3FetchException("Exception occurred while fetching the data from the cloud");
 		}
 		logger.info("Total bytes read from cloud: " + buffer.position()
 				+ " for key: " + key);

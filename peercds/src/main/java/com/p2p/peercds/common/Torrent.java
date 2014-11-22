@@ -705,7 +705,13 @@ public class Torrent {
 		}
 	
 		logger.info("Sanitized cloud Key: "+cloudKeyForFile);
-		boolean success = CloudHelper.uploadTorrent(BUCKET_NAME, cloudKeyForFile.trim(), parent);
+		boolean success = false;
+		try {
+			success = CloudHelper.uploadTorrent(BUCKET_NAME, cloudKeyForFile.trim(), parent);
+		} catch (S3FetchException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		if(!success)
 			logger.info("File won't be uploaded to cloud as file is present in swarm and uploaded to cloud");
 		else
