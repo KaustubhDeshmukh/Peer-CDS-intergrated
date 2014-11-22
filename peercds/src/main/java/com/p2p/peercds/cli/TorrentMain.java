@@ -42,7 +42,9 @@ import org.slf4j.LoggerFactory;
 public class TorrentMain {
 
 	private static final Logger logger =
-		LoggerFactory.getLogger(TorrentMain.class);
+			LoggerFactory.getLogger(TorrentMain.class);
+	
+	private static final String trackerURL = "http://localhost:8080/tracker";
 
 	/**
 	 * Display program usage on the given {@link PrintStream}.
@@ -67,7 +69,7 @@ public class TorrentMain {
 		s.println("  -t,--torrent FILE     Use FILE to read/write torrent file.");
 		s.println();
 		s.println("  -c,--create           Create a new torrent file using " +
-			"the given announce URL and data.");
+				"the given announce URL and data.");
 		s.println("  -a,--announce         Tracker URL (can be repeated).");
 		s.println();
 	}
@@ -83,7 +85,7 @@ public class TorrentMain {
 	 */
 	public static void main(String[] args) {
 		BasicConfigurator.configure(new ConsoleAppender(
-			new PatternLayout("%-5p: %m%n")));
+				new PatternLayout("%-5p: %m%n")));
 
 		CmdLineParser parser = new CmdLineParser();
 		CmdLineParser.Option help = parser.addBooleanOption('h', "help");
@@ -121,9 +123,9 @@ public class TorrentMain {
 		String[] otherArgs = parser.getRemainingArgs();
 
 		if (Boolean.TRUE.equals(createFlag) &&
-			(otherArgs.length != 1 || announceURLs.isEmpty())) {
+				(otherArgs.length != 1 || announceURLs.isEmpty())) {
 			usage(System.err, "Announce URL and a file or directory must be " +
-				"provided to create a torrent file!");
+					"provided to create a torrent file!");
 			System.exit(1);
 		}
 
@@ -151,12 +153,12 @@ public class TorrentMain {
 				File source = new File(otherArgs[0]);
 				if (!source.exists() || !source.canRead()) {
 					throw new IllegalArgumentException(
-						"Cannot access source file or directory " +
-							source.getName());
+							"Cannot access source file or directory " +
+									source.getName());
 				}
 
 				String creator = String.format("%s (ttorrent)",
-					System.getProperty("user.name"));
+						System.getProperty("user.name"));
 
 				Torrent torrent = null;
 				if (source.isDirectory()) {
@@ -180,5 +182,58 @@ public class TorrentMain {
 				IOUtils.closeQuietly(fos);
 			}
 		}
+	}
+
+	public static String createTorrent(String directory, String fileName) throws Exception{
+
+		String response = null;
+		OutputStream fos = null;
+		try {
+
+			fos = new FileOutputStream(directory+fileName);
+
+			//Process the announce URLs into URIs
+			List<URI> announceURIs = new ArrayList<URI>();		
+			//for (String url : announceURLs) { 
+				announceURIs.add(new URI(trackerURL));
+			//}
+
+			//Create the announce-list as a list of lists of URIs
+			//Assume all the URI's are first tier trackers
+			List<List<URI>> announceList = new ArrayList<List<URI>>();
+			announceList.add(announceURIs);
+
+			File source = new File(directory+fileName);
+			if (!source.exists() || !source.canRead()) {
+				throw new IllegalArgumentException(
+						"Cannot access source file or directory " +
+								source.getName());
+			}
+
+			String creator = String.format("%s (ttorrent)",
+					System.getProperty("user.name"));
+
+			Torrent torrent = null;
+			if (source.isDirectory()) {
+				File[] files = source.listFiles();
+				Arrays.sort(files);
+				torrent = Torrent.create(source, Arrays.asList(files),
+						announceList, creator);
+			} else {
+				torrent = Torrent.create(source, announceList, creator);
+			}
+
+			torrent.save(fos);
+			
+			response = "true";
+
+		
+		} finally {
+			if (fos != System.out) {
+				IOUtils.closeQuietly(fos);
+			}
+		}
+		
+		return response;
 	}
 }

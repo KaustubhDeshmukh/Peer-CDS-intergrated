@@ -320,9 +320,9 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 	 * </p>
 	 */
 	public synchronized void init() throws InterruptedException, IOException {
-		if (this.isInitialized()) {
-			throw new IllegalStateException("Torrent was already initialized!");
-		}
+//		if (this.isInitialized()) {
+//			throw new IllegalStateException("Torrent was already initialized!");
+//		}
 
 		int threads = getHashingThreadsCount();
 		int nPieces = (int) (Math.ceil(
