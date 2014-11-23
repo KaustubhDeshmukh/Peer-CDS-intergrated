@@ -47,7 +47,9 @@ $(function(){
 			$('#'+active_row).removeClass('info');
 		}
 		$('#'+active_row).addClass('info');
-
+		
+		console.log(files);
+		
 		var seeds=files[active_row].seeds;
 		var peers=files[active_row].peers;
 		var status=files[active_row].status;
@@ -62,21 +64,21 @@ $(function(){
 		$('#default-path-modal').modal('show');
 		
 		$("#resource-submit").click(function(){
-			var path=$("#resource-url").val();
-			var data=JSON.stringify({"defaultDirectory":path});
-			$.ajax({
-				url:"http://192.168.200.20:8080/ttorrent/service/setDefaultDirectory",
-				contentType: "application/json; charset=utf-8",
-    			dataType: "json",
-				type:"POST",
-				data:data,
-				success:function(res){
-					console.log(res);
-				},
-				error:function(){
-					
-				}
-			});		
+//			var path=$("#resource-url").val();
+//			var data=JSON.stringify({"defaultDirectory":path});
+//			$.ajax({
+//				url:"http://192.168.200.20:8080/ttorrent/service/setDefaultDirectory",
+//				contentType: "application/json; charset=utf-8",
+//    			dataType: "json",
+//				type:"POST",
+//				data:data,
+//				success:function(res){
+//					console.log(res);
+//				},
+//				error:function(){
+//					
+//				}
+//			});		
 		});
 		
 		
