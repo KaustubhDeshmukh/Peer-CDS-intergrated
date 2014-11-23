@@ -174,4 +174,35 @@ public class ClientMain {
 			System.exit(2);
 		}
 	}
+	
+	public static Client startTorrent(String defaultDirectory, String torrentName){
+		
+		Client c = null;
+		try {
+			 c = new Client(
+				getIPv4Address(null),
+				SharedTorrent.fromFile(
+					new File(defaultDirectory+torrentName),
+					new File(defaultDirectory)));
+
+			c.setMaxDownloadRate(0.0);
+			c.setMaxUploadRate(0.0);
+
+			// Set a shutdown hook that will stop the sharing/seeding and send
+			// a STOPPED announce request.
+			Runtime.getRuntime().addShutdownHook(
+				new Thread(new Client.ClientShutdown(c, null)));
+
+			c.share(-1);
+			if (Client.ClientState.ERROR.equals(c.getState())) {
+				return null;
+				//System.exit(1);
+			}
+			return c;
+		} catch (Exception e) {
+			logger.error("Fatal error: {}", e.getMessage(), e);
+			return null;
+			//System.exit(2);
+		}
+	}
 }

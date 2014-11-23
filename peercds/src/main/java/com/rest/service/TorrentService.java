@@ -17,7 +17,10 @@ import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.p2p.peercds.cli.ClientWrapper;
 import com.rest.service.mappers.CreateTorrentResponseMapper;
 import com.rest.service.mappers.DefaultDirectoryRequestMapper;
 import com.rest.service.mappers.GenericResponseStatusMapper;
@@ -28,7 +31,21 @@ import com.sun.jersey.api.view.Viewable;
 @Path("/service")
 public class TorrentService {
 
-	private static String localDefaultDirectory;
+	private static final Logger logger =
+			LoggerFactory.getLogger(TorrentService.class);
+	private static ClientWrapper clientWrapper;
+	
+	static{
+		ClientWrapper.getClientWrapper();
+	}
+	
+	public TorrentService(){
+		
+		super();
+		if(clientWrapper == null){
+			clientWrapper = ClientWrapper.getClientWrapper();
+		}
+	}
 	
 	@GET
 	@Path("/defaultdirectory")
@@ -36,19 +53,21 @@ public class TorrentService {
 	public String getDefaultDirectory(){
 		
 		String response = null;
-		DefaultDirectoryRequestMapper responseMapper = new DefaultDirectoryRequestMapper();
-		responseMapper.setDefaultDirectory(localDefaultDirectory);
+		DefaultDirectoryRequestMapper responseMapper = clientWrapper.getDefaultDirectory();
 		try {
 			response = (new ObjectMapper().writeValueAsString(responseMapper));
 		} catch (JsonGenerationException e) {
+			logger.debug("getDefaultDirectory(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (JsonMappingException e) {
+			logger.debug("getDefaultDirectory(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (IOException e) {
+			logger.debug("getDefaultDirectory(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		
 		return response;
@@ -63,41 +82,28 @@ public class TorrentService {
 		ObjectMapper mapper = new ObjectMapper();
 		String responseString = null;
 		
-		DefaultDirectoryRequestMapper requestMapper = null;
 		Map<String, String> requestMap = null;
 		try {
-			System.out.println("request json: "+requestJson);
+			
 			requestMap = mapper.readValue(requestJson, Map.class);
-			System.out.println("default directory from map: "+requestMap.get("defaultDirectory"));
-			requestMapper = mapper.readValue(requestJson, DefaultDirectoryRequestMapper.class);
-			System.out.println("default directory from bean: "+requestMapper.getDefaultDirectory());
-		} catch (JsonParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		localDefaultDirectory = requestMapper.getDefaultDirectory();
-		GenericResponseStatusMapper response = new GenericResponseStatusMapper();
-		response.setSuccess("true");
-		response.setMessage("Default directory set sucessfully");
-		
-		try {
+
+			GenericResponseStatusMapper response = clientWrapper.setDefaultDirectory(requestMap.get("defaultDirectory"));
+			
 			responseString = mapper.writeValueAsString(response);
-		} catch (JsonGenerationException e) {
+		} catch (JsonParseException e) {
+			logger.debug("setDefaultDirectory(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (JsonMappingException e) {
+			logger.debug("setDefaultDirectory(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (IOException e) {
+			logger.debug("setDefaultDirectory(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
+				
 		return responseString;
 	}
 	
@@ -110,24 +116,31 @@ public class TorrentService {
 		String responseString = null;
 		ObjectMapper mapper = new ObjectMapper();
 		
-		CreateTorrentResponseMapper response = new CreateTorrentResponseMapper();
-		response.setSuccess("true");
-		response.setMessage("Torrent created successfully");
-		response.setDefaultDirectory(localDefaultDirectory);
+		Map<String, String> requestMap = null;
+		String request = null;
 		
 		try {
+			
+			requestMap = mapper.readValue(requestJson, Map.class);
+			
+			CreateTorrentResponseMapper response = clientWrapper.createTorrent( requestMap.get("filename"));
+			
 			responseString = mapper.writeValueAsString(response);
-		} catch (JsonGenerationException e) {
+			
+		} catch (JsonParseException e) {
+			logger.debug("createTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e1.printStackTrace();
 		} catch (JsonMappingException e) {
+			logger.debug("createTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e1.printStackTrace();
 		} catch (IOException e) {
+			logger.debug("createTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e1.printStackTrace();
 		}
-		
+				
 		return responseString;
 	}
 	
@@ -139,55 +152,22 @@ public class TorrentService {
 		ObjectMapper mapper = new ObjectMapper();
 		String responseString = null;
 		
-		List<MonitorResponseMapper> responselist = new ArrayList<MonitorResponseMapper>();
-		
-		MonitorResponseMapper metadata = new MonitorResponseMapper();
-		metadata.setDownloadSpeed("50kbps");
-		metadata.setEta("12 min");
-		metadata.setFileName("abc.txt");
-		metadata.setPeers("50");
-		metadata.setProgress("40");
-		metadata.setSeeds("10");
-		metadata.setSize("40GB");
-		metadata.setStatus("Downloading");
-		metadata.setUploadSpeed("20kbps");
-		responselist.add(metadata);
-		
-		MonitorResponseMapper metadata2 = new MonitorResponseMapper();
-		metadata2.setDownloadSpeed("100kbps");
-		metadata2.setEta("6 min");
-		metadata2.setFileName("qwerty.txt");
-		metadata2.setPeers("40");
-		metadata2.setProgress("80");
-		metadata2.setSeeds("20");
-		metadata2.setSize("80GB");
-		metadata2.setStatus("Seeding");
-		metadata2.setUploadSpeed("40kbps");
-		responselist.add(metadata2);
-		
-		MonitorResponseMapper metadata3 = new MonitorResponseMapper();
-		metadata3.setDownloadSpeed("80kbps");
-		metadata3.setEta("4 min");
-		metadata3.setFileName("random.txt");
-		metadata3.setPeers("60");
-		metadata3.setProgress("20");
-		metadata3.setSeeds("20");
-		metadata3.setSize("3GB");
-		metadata3.setStatus("Seeding");
-		metadata3.setUploadSpeed("40kbps");
-		responselist.add(metadata3);
+		List<MonitorResponseMapper> responselist = clientWrapper.getTorrents();
 		
 		try {
 			responseString = mapper.writeValueAsString(responselist);
 		} catch (JsonGenerationException e) {
+			logger.debug("getTorrents(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (JsonMappingException e) {
+			logger.debug("getTorrents(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (IOException e) {
+			logger.debug("getTorrents(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		
 		return responseString;
@@ -202,34 +182,27 @@ public class TorrentService {
 		String responseString = null;
 		ObjectMapper mapper = new ObjectMapper();
 		
-		GenericTorrentResponseMapper response = new GenericTorrentResponseMapper();
-		
-		response.setSuccess("true");
-		response.setMessage("Torrent started");
-		
-		MonitorResponseMapper metadata = new MonitorResponseMapper();
-		metadata.setDownloadSpeed("0kbps");
-		metadata.setEta("0 min");
-		metadata.setFileName("abc.txt");
-		metadata.setPeers("0");
-		metadata.setProgress("0%");
-		metadata.setSeeds("0");
-		metadata.setSize("0GB");
-		metadata.setStatus("Sharing");
-		metadata.setUploadSpeed("0kbps");
-		response.setMetadata(metadata);
-		
+		Map<String, String> requestMap = null;
 		try {
+			
+			requestMap = mapper.readValue(requestJson, Map.class);
+						
+			GenericTorrentResponseMapper response = clientWrapper.startTorrent(requestMap.get("uuid"));
+			
 			responseString = mapper.writeValueAsString(response);
-		} catch (JsonGenerationException e) {
+			
+		} catch (JsonParseException e) {
+			logger.debug("startTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (JsonMappingException e) {
+			logger.debug("startTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (IOException e) {
+			logger.debug("startTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		
 		return responseString;
@@ -244,24 +217,30 @@ public class TorrentService {
 		String responseString = null;
 		ObjectMapper mapper = new ObjectMapper();
 		
-		GenericResponseStatusMapper genericresponse = new GenericResponseStatusMapper();
-		
-		genericresponse.setSuccess("true");
-		genericresponse.setMessage("Torrent paused");
-		
+		Map<String, String> requestMap = null;
 		try {
-			responseString = mapper.writeValueAsString(genericresponse);
-		} catch (JsonGenerationException e) {
+			
+			requestMap = mapper.readValue(requestJson, Map.class);
+			
+			GenericResponseStatusMapper response = clientWrapper.pauseTorrent(requestMap.get("uuid"));
+			
+			responseString = mapper.writeValueAsString(response);
+			
+		} catch (JsonParseException e) {
+			logger.debug("pauseTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (JsonMappingException e) {
+			logger.debug("pauseTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (IOException e) {
+			logger.debug("pauseTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		
+				
 		return responseString;
 	}
 	
@@ -274,24 +253,30 @@ public class TorrentService {
 		String responseString = null;
 		ObjectMapper mapper = new ObjectMapper();
 		
-		GenericResponseStatusMapper genericresponse = new GenericResponseStatusMapper();
 		
-		genericresponse.setSuccess("true");
-		genericresponse.setMessage("Torrent deleted");
-		
-				
+		Map<String, String> requestMap = null;
 		try {
-			responseString = mapper.writeValueAsString(genericresponse);
-		} catch (JsonGenerationException e) {
+			
+			requestMap = mapper.readValue(requestJson, Map.class);
+						
+			GenericResponseStatusMapper response = clientWrapper.deleteTorrent(requestMap.get("uuid"));
+			
+			responseString = mapper.writeValueAsString(response);
+			
+		} catch (JsonParseException e) {
+			logger.debug("deleteTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (JsonMappingException e) {
+			logger.debug("deleteTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (IOException e) {
+			logger.debug("deleteTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
+		
 		
 		return responseString;
 	}
@@ -304,35 +289,28 @@ public class TorrentService {
 		
 		String responseString = null;
 		ObjectMapper mapper = new ObjectMapper();
-		
-		GenericTorrentResponseMapper response = new GenericTorrentResponseMapper();
-		
-		response.setSuccess("true");
-		response.setMessage("Torrent resumed");
-		
-		MonitorResponseMapper metadata = new MonitorResponseMapper();
-		metadata.setDownloadSpeed("0kbps");
-		metadata.setEta("0 min");
-		metadata.setFileName("abc.txt");
-		metadata.setPeers("0");
-		metadata.setProgress("0%");
-		metadata.setSeeds("0");
-		metadata.setSize("0GB");
-		metadata.setStatus("Sharing");
-		metadata.setUploadSpeed("0kbps");
-		response.setMetadata(metadata);
+		Map<String, String> requestMap = null;
+		String request = null;
 		
 		try {
+			//System.out.println(requestJson);
+			requestMap = mapper.readValue(requestJson, Map.class);
+			
+			GenericTorrentResponseMapper response = clientWrapper.downloadTorrent(requestMap.get("filename"));
+			
 			responseString = mapper.writeValueAsString(response);
-		} catch (JsonGenerationException e) {
+		} catch (JsonParseException e) {
+			logger.debug("downloadTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (JsonMappingException e) {
+			logger.debug("downloadTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (IOException e) {
+			logger.debug("downloadTorrent(): "+e.getMessage());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		
 		return responseString;
@@ -345,7 +323,11 @@ public class TorrentService {
 	public Response downloadTorrent(){
 		
 		
+<<<<<<< HEAD
 	        return Response.ok(new Viewable("/index.html")).build();
+=======
+	     return Response.ok(new Viewable("/jsp/index.html")).build();
+>>>>>>> c1dd5227c9a8e74cd170c8110e6caab228507412
 	    
 	}
 }

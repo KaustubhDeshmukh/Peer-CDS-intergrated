@@ -471,6 +471,16 @@ public class Client extends Observable implements Runnable,
 			);
 		}
 	}
+	
+	
+
+	public ConcurrentMap<String, SharingPeer> getConnected() {
+		return connected;
+	}
+
+	public void setConnected(ConcurrentMap<String, SharingPeer> connected) {
+		this.connected = connected;
+	}
 
 	/**
 	 * Reset peers download and upload rates.

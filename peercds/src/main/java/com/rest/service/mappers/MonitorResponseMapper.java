@@ -2,6 +2,7 @@ package com.rest.service.mappers;
 
 public class MonitorResponseMapper {
 
+	private String uuid;
 	private String fileName;
 	private String status;
 	private String progress;
@@ -11,7 +12,15 @@ public class MonitorResponseMapper {
 	private String seeds;
 	private String eta;
 	private String size;
+	private boolean paused;
+	private boolean error;
 	
+	public String getUuid() {
+		return uuid;
+	}
+	public void setUuid(String uuid) {
+		this.uuid = uuid;
+	}
 	public String getFileName() {
 		return fileName;
 	}
@@ -65,5 +74,17 @@ public class MonitorResponseMapper {
 	}
 	public void setSize(String size) {
 		this.size = size;
+	}
+	public boolean isPaused() {
+		return paused;
+	}
+	public void setPaused(boolean paused) {
+		this.paused = paused;
+	}
+	public boolean isError() {
+		return error;
+	}
+	public void setError(boolean error) {
+		this.error = error;
 	}
 }

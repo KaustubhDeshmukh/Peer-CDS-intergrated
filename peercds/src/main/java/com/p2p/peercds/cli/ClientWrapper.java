@@ -1,0 +1,552 @@
+package com.p2p.peercds.cli;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.p2p.peercds.client.Client;
+import com.p2p.peercds.client.Client.ClientState;
+import com.p2p.peercds.client.peer.SharingPeer;
+import com.p2p.peercds.common.Torrent;
+import com.rest.service.mappers.ClientMetadata;
+import com.rest.service.mappers.CreateTorrentResponseMapper;
+import com.rest.service.mappers.DefaultDirectoryRequestMapper;
+import com.rest.service.mappers.FileMapper;
+import com.rest.service.mappers.GenericResponseStatusMapper;
+import com.rest.service.mappers.GenericTorrentResponseMapper;
+import com.rest.service.mappers.MonitorResponseMapper;
+
+public class ClientWrapper {
+
+	private static final Logger logger =
+			LoggerFactory.getLogger(ClientWrapper.class);
+
+	private HashMap<String, ClientMetadata> clientMap;
+
+	private static ClientWrapper clientWrapper;
+
+	private static String DEFAULT_OUTPUT_DIRECTORY = "/Desktop/torrentdir/";
+
+	private static String TORRENT_METADATA_DIRECTORY = "/Desktop/fileMap.txt";
+
+	private ClientWrapper() {
+
+	}
+
+	public static ClientWrapper getClientWrapper() {
+
+		if(clientWrapper == null){
+
+			clientWrapper = new ClientWrapper();
+			logger.info("ClientWrapper(): Initialized ClientWrapper");
+			
+			String userHome = System.getProperty("user.home"); 
+			DEFAULT_OUTPUT_DIRECTORY = userHome+DEFAULT_OUTPUT_DIRECTORY;
+			TORRENT_METADATA_DIRECTORY = userHome+TORRENT_METADATA_DIRECTORY;
+
+			clientWrapper.readMetadataFromFile();
+			logger.info("ClientWrapper(): Done reading state from metadata file");
+
+		}
+		return clientWrapper;
+	}
+
+	public HashMap<String, ClientMetadata> getClientMap() {
+		return clientMap;
+	}
+
+	public void setClientMap(HashMap<String, ClientMetadata> clientMap) {
+		this.clientMap = clientMap;
+	}
+
+	public static String getDEFAULT_OUTPUT_DIRECTORY() {
+		return DEFAULT_OUTPUT_DIRECTORY;
+	}
+
+	public static void setDEFAULT_OUTPUT_DIRECTORY(String dEFAULT_OUTPUT_DIRECTORY) {
+
+		DEFAULT_OUTPUT_DIRECTORY = dEFAULT_OUTPUT_DIRECTORY;
+		logger.info("setDEFAULT_OUTPUT_DIRECTORY(): Default directory set to: "+dEFAULT_OUTPUT_DIRECTORY);
+	}
+
+	public CreateTorrentResponseMapper createTorrent(String fileName){
+
+		CreateTorrentResponseMapper response = new CreateTorrentResponseMapper();
+
+		try{
+
+			TorrentMain.createTorrent(DEFAULT_OUTPUT_DIRECTORY, fileName);
+			logger.info("createTorrent(): Torrent file created in directory: "+getDEFAULT_OUTPUT_DIRECTORY());
+
+		} catch (IllegalArgumentException e){
+
+			logger.info("createTorrent(): Could not create "+fileName+" in directory: "+getDEFAULT_OUTPUT_DIRECTORY()+" Error: "+e.getMessage());
+			response.setSuccess("false");
+			response.setMessage("Torrent Start Failed: File not found in the default directory");
+			return response;
+
+		} catch (Exception e){
+			
+			logger.info("createTorrent(): Could not create "+fileName+" in directory: "+getDEFAULT_OUTPUT_DIRECTORY()+" Error: "+e.getMessage());
+			response.setSuccess("false");
+			response.setMessage("Torrent Start Failed: Internal Error");
+			return response;
+		}
+
+		logger.info("createTorrent(): Starting seeding of torrent: "+fileName);
+		this.downloadTorrent(fileName);
+
+		response.setSuccess("true");
+		response.setMessage("Torrent created successfully");
+
+		return response;
+
+	}
+
+	public GenericResponseStatusMapper deleteTorrent(String uuid){
+
+		Client client = null;
+		GenericResponseStatusMapper genericresponse = new GenericResponseStatusMapper();
+		
+		ClientMetadata clientMetadata= clientMap.get(uuid);
+		if(clientMetadata == null){
+			logger.info("deleteTorrent(): Could not find torrent with ID:"+uuid+" in client map ");
+			genericresponse.setSuccess("false");
+			genericresponse.setMessage("Could not find torrent");
+			
+			return genericresponse;
+		}
+			
+		client = clientMetadata.getClient();
+
+		logger.info("deleteTorrent(): Deleting torrent with ID:"+uuid);
+		new Thread(new Client.ClientShutdown(client, null)).start();
+		
+		clientMap.remove(uuid);
+
+		logger.info("deleteTorrent(): Deleted torrent with ID:"+uuid);
+		
+		writeMetadataToFile();
+
+		genericresponse.setSuccess("true");
+		genericresponse.setMessage("Torrent deleted");
+		return genericresponse;
+	}
+
+	public GenericResponseStatusMapper setDefaultDirectory(String directory){
+
+		if(directory != null && !directory.equalsIgnoreCase("")){
+
+
+			if(!directory.endsWith("/")){
+				directory = directory.concat("/");
+			}
+
+			//directory = directory.replaceAll("/", "//");
+
+			setDEFAULT_OUTPUT_DIRECTORY(directory);
+
+			logger.info("setDefaultDirectory(): Default Directory set to: "+directory);
+			GenericResponseStatusMapper response = new GenericResponseStatusMapper();
+			response.setSuccess("true");
+			response.setMessage("Default directory set sucessfully");
+			return response;
+		}
+		else{
+			
+			logger.info("setDefaultDirectory(): Bad Request");
+			GenericResponseStatusMapper response = new GenericResponseStatusMapper();
+			response.setSuccess("false");
+			response.setMessage("Default directory could not be set. Please enter default directory");
+			return response;
+		}
+
+	}
+
+	public DefaultDirectoryRequestMapper getDefaultDirectory(){
+
+		
+		DefaultDirectoryRequestMapper responseMapper = new DefaultDirectoryRequestMapper();
+		responseMapper.setDefaultDirectory(DEFAULT_OUTPUT_DIRECTORY);
+		return responseMapper;
+	}
+
+	public List<MonitorResponseMapper> getTorrents(){
+
+		List<MonitorResponseMapper> responselist = new ArrayList<MonitorResponseMapper>();
+
+		Iterator<Entry<String, ClientMetadata>> iterator = clientMap.entrySet().iterator();
+
+		logger.info("getTorrents(): Iterating client map with "+clientMap.size()+ " entries");
+		while(iterator.hasNext()){
+
+			Entry<String, ClientMetadata> clientEntry = iterator.next();
+			ClientMetadata clientMetadata = clientEntry.getValue();
+
+			if(!clientMetadata.isPaused()){
+				
+				
+				Client client = clientMetadata.getClient();
+				
+				logger.info("getTorrents(): Retrieving metadata for torrent: "+clientMetadata.getTorrentName());
+				MonitorResponseMapper metadata = new MonitorResponseMapper();
+
+				// calculate download and upload speed
+				float dl = 0;
+				float ul = 0;
+				int noOfSeeds = 0;
+				Iterator<SharingPeer> connectedIterator = client.getConnected().values().iterator();
+				while(connectedIterator.hasNext()) {
+					SharingPeer peer = connectedIterator.next();
+					dl += peer.getDLRate().get();
+					ul += peer.getULRate().get();
+					if(peer.getAvailablePieces().cardinality() == client.getTorrent().getPieceCount()){
+						noOfSeeds++;
+					}
+				}
+
+				metadata.setDownloadSpeed(String.format("%.2f", dl/1024.0));
+				metadata.setUploadSpeed(String.format("%.2f", ul/1024.0));
+
+				// set size
+				long size = client.getTorrent().getSize();
+				metadata.setSize(String.valueOf(size/1024));
+
+				//set eta
+				metadata.setEta(String.valueOf(size/dl/60));
+
+				//set progress percent
+				metadata.setProgress(String.format("%.2f", client.getTorrent().getCompletion()));
+
+				// set peers
+				metadata.setPeers(String.valueOf(client.getPeers().size()));
+
+				//set name
+				metadata.setFileName(client.getTorrent().getName());
+
+				//set seeds
+				metadata.setSeeds(String.valueOf(noOfSeeds));
+
+				//set status
+				ClientState state = client.getState();
+				if(state.equals(ClientState.SHARING)||state.equals(ClientState.VALIDATING)||state.equals(ClientState.WAITING)){
+
+					metadata.setStatus("Downloading");
+				} else {
+
+					metadata.setStatus("Uploading");
+				}
+
+				metadata.setUuid(clientEntry.getKey());
+
+				metadata.setPaused(clientMetadata.isPaused());
+
+				metadata.setError(clientMetadata.isError());
+				responselist.add(metadata);
+			}
+			else {
+				
+				logger.info("getTorrents(): Skipping retrieval of metadata for torrent: "+clientMetadata.getTorrentName());
+				MonitorResponseMapper metadata = new MonitorResponseMapper();
+				metadata.setError(clientMetadata.isError());
+				metadata.setPaused(clientMetadata.isPaused());
+				metadata.setFileName(clientMetadata.getTorrentName());
+				metadata.setUuid(clientEntry.getKey());
+				responselist.add(metadata);
+			}
+
+		}
+		return responselist;
+	}
+
+	public GenericTorrentResponseMapper startTorrent(String uuid){
+
+		GenericTorrentResponseMapper response = new GenericTorrentResponseMapper();
+
+		ClientMetadata clientMetadata = clientMap.get(uuid);
+		if(clientMetadata == null){
+			logger.info("startTorrent(): Could not find torrent with ID:"+uuid+" in client map ");
+			response.setSuccess("false");
+			response.setMessage("Could not find torrent");
+			
+			return response;
+		}
+
+		if(clientMetadata.isPaused()){
+
+			logger.info("startTorrent(): Starting torrent :"+clientMetadata.getTorrentName());
+			Client c = null;
+			c = ClientMain.startTorrent(clientMetadata.getTorrentDirectory(), clientMetadata.getTorrentName());
+
+			if(c!=null){
+				clientMetadata.setError(false);
+				clientMetadata.setPaused(false);
+				clientMetadata.setClient(c);
+
+				logger.info("startTorrent(): Started torrent :"+clientMetadata.getTorrentName());
+				writeMetadataToFile();
+
+				response.setSuccess("true");
+				response.setMessage("Torrent Started");
+
+				return response;
+
+			} else {
+
+				logger.info("startTorrent(): Could not find torrent :"+clientMetadata.getTorrentName());
+				clientMetadata.setError(true);
+				response.setSuccess("false");
+				response.setMessage("Could not initialize torrent: File "+clientMetadata.getTorrentName()+" not found in "+clientMetadata.getTorrentDirectory()+" directory!");
+
+				return response;
+			}
+		}
+		else{
+
+			logger.info("startTorrent(): Torrent :"+clientMetadata.getTorrentName()+" already running");
+			response.setSuccess("false");
+			response.setMessage("Torrent already running");
+
+			return response;
+		}
+
+	}
+
+	public GenericResponseStatusMapper pauseTorrent(String uuid){
+
+		Client client = null;
+		GenericResponseStatusMapper genericresponse = new GenericResponseStatusMapper();
+		
+		ClientMetadata clientMetadata= clientMap.get(uuid);
+		
+		if(clientMetadata == null){
+			logger.info("pauseTorrent(): Could not find torrent with ID:"+uuid+" in client map ");
+			genericresponse.setSuccess("false");
+			genericresponse.setMessage("Could not find torrent");
+			
+			return genericresponse;
+		}
+		
+		client = clientMetadata.getClient();
+
+		if(!clientMetadata.isPaused()){
+
+			logger.info("pauseTorrent(): Pausing torrent :"+clientMetadata.getTorrentName());
+			new Thread(new Client.ClientShutdown(client, null)).start();
+			clientMetadata.setPaused(true);
+
+			logger.info("startTorrent(): Paused torrent :"+clientMetadata.getTorrentName());
+			writeMetadataToFile();
+
+			genericresponse.setSuccess("true");
+			genericresponse.setMessage("Torrent paused");
+		} 
+		else {
+
+			logger.info("startTorrent(): Torrent :"+clientMetadata.getTorrentName()+" already paused");
+			genericresponse.setSuccess("true");
+			genericresponse.setMessage("Torrent already paused");
+		}
+		
+		return genericresponse;
+	}
+
+	public GenericTorrentResponseMapper downloadTorrent(String torrentName){
+
+		return downloadTorrent(getDEFAULT_OUTPUT_DIRECTORY(), torrentName, false);
+	}
+
+
+	public GenericTorrentResponseMapper downloadTorrent(String defaultDirectory, String torrentName, boolean paused){
+
+		String info_hash = null;
+		GenericTorrentResponseMapper response = new GenericTorrentResponseMapper();
+
+		try {
+			
+			Torrent torrent = Torrent.load(new File(defaultDirectory+torrentName));
+			logger.info("downloadTorrent(): Checking info_hash for duplicate torrent: "+torrentName);
+			info_hash = new String(torrent.getInfoHash(),"ISO-8859-1");
+			//System.out.println("info-hash:"+info_hash);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			logger.info("downloadTorrent(): File not found in the default directory. Error: "+e.getMessage());
+			response.setSuccess("false");
+			response.setMessage("Torrent Start Failed: File not found in the default directory");
+			return response;
+			//e.printStackTrace();
+		}
+
+		Iterator<Entry<String, ClientMetadata>> iterator = clientMap.entrySet().iterator();
+
+		while(iterator.hasNext()){
+
+			Entry<String, ClientMetadata> clientEntry = iterator.next();
+			ClientMetadata clientMetadata = clientEntry.getValue();
+			if(clientMetadata.getInfoHash().equals(info_hash)){
+
+				logger.info("downloadTorrent(): Torrent "+torrentName+"already running in the client");
+				response.setSuccess("false");
+				response.setMessage("Torrent already running in the client");
+				return response;
+			}
+		}
+
+		logger.info("downloadTorrent(): Starting download of torrent: "+torrentName);
+		Client c = null;
+		c = ClientMain.startTorrent(defaultDirectory, torrentName);
+
+		if(c == null){
+
+			
+			logger.info("downloadTorrent(): Torrent Start Failed: File not found in the default directory");
+			response.setSuccess("false");
+			response.setMessage("Torrent Start Failed: File not found in the default directory");
+			return response;
+
+		} else {
+
+			//add to map
+			ClientMetadata clientMetadata = new ClientMetadata();
+			clientMetadata.setClient(c);
+			clientMetadata.setTorrentDirectory(defaultDirectory);
+			clientMetadata.setTorrentName(torrentName);
+			clientMetadata.setPaused(paused);
+			String uuid = UUID.randomUUID().toString();
+			clientMetadata.setInfoHash(info_hash);
+			clientMap.put(uuid, clientMetadata);
+
+			// write to file
+			writeMetadataToFile();
+
+			logger.info("downloadTorrent(): Torrent "+torrentName+" Started");
+
+			response.setSuccess("true");
+			response.setMessage("Torrent Started");
+
+			return response;
+		}
+	}
+
+	private void writeMetadataToFile(){
+
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+
+			logger.info("writeMetadataToFile(): Writing client map to metadata file: "+TORRENT_METADATA_DIRECTORY);
+			FileMapper fileMapper = new FileMapper();
+			fileMapper.setDefaultDirectory(getDEFAULT_OUTPUT_DIRECTORY());
+			fileMapper.setClientMap(clientMap);
+
+			File file = new File(TORRENT_METADATA_DIRECTORY);
+			
+			if(file.exists()){
+				logger.info("writeMetadataToFile(): Metadata file already exists.. Updating file");
+				file.setWritable(true);
+				file.delete();
+			}
+
+			mapper.writeValue( new File(TORRENT_METADATA_DIRECTORY), fileMapper);
+
+			logger.info("writeMetadataToFile(): Metadata file "+TORRENT_METADATA_DIRECTORY+" Updated");
+		} catch (JsonGenerationException e) {
+			// TODO Auto-generated catch block
+			logger.debug("writeMetadataToFile(): "+e.getMessage());
+			//e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			logger.debug("writeMetadataToFile(): "+e.getMessage());
+			//e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			logger.debug("writeMetadataToFile(): "+e.getMessage());
+			//e.printStackTrace();
+		}
+	}
+
+	private void readMetadataFromFile(){
+
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+
+			File file = new File(TORRENT_METADATA_DIRECTORY);
+			logger.info("readMetadataFromFile(): Reading metadata from file "+TORRENT_METADATA_DIRECTORY);
+			if(file.exists()){
+
+				logger.info("readMetadataFromFile(): Found metadata file at path: "+TORRENT_METADATA_DIRECTORY);
+				this.clientMap = new HashMap<String, ClientMetadata>();
+
+				FileMapper fileMapper = mapper.readValue(file, FileMapper.class);
+				setDEFAULT_OUTPUT_DIRECTORY(fileMapper.getDefaultDirectory());
+				logger.info("readMetadataFromFile(): ClientWrapper default directory set to: "+fileMapper.getDefaultDirectory());
+
+				Iterator<Entry<String, ClientMetadata>> iterator = fileMapper.getClientMap().entrySet().iterator();
+
+				while(iterator.hasNext()){
+
+					Entry<String, ClientMetadata> clientEntry = iterator.next();
+					ClientMetadata clientMetadata = clientEntry.getValue();
+
+					Client c = null;
+					if(!clientMetadata.isPaused()){
+
+						c = ClientMain.startTorrent(clientMetadata.getTorrentDirectory(), clientMetadata.getTorrentName());
+						logger.info("readMetadataFromFile(): Initializing torrent : "+clientMetadata.getTorrentDirectory()+clientMetadata.getTorrentName());
+
+						if(c != null){
+
+							logger.info("readMetadataFromFile(): Torrent started : "+clientMetadata.getTorrentDirectory()+clientMetadata.getTorrentName());
+							clientMetadata.setClient(c);
+							
+						} else {
+
+							clientMetadata.setError(true);
+							logger.info("readMetadataFromFile(): Could not initialize torrent : "+clientMetadata.getTorrentDirectory()+clientMetadata.getTorrentName()+" : File not found!");
+						}
+
+					} else{
+
+						logger.info("readMetadataFromFile(): Skipping Initialization for paused torrent : "+clientMetadata.getTorrentDirectory()+clientMetadata.getTorrentName());
+					}
+					
+					logger.info("readMetadataFromFile(): Pushing torrent to Map : "+clientMetadata.getTorrentDirectory()+clientMetadata.getTorrentName());
+					this.clientMap.put(clientEntry.getKey(), clientEntry.getValue());
+
+				}
+
+			} else {
+				logger.info("readMetadataFromFile(): Could not find metadata file at path: "+TORRENT_METADATA_DIRECTORY);
+				this.clientMap = new HashMap<String, ClientMetadata>();
+			}
+
+
+		} catch (JsonGenerationException e) {
+			// TODO Auto-generated catch block
+			logger.debug("readMetadataFromFile(): "+e.getMessage());
+			//e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			logger.debug("readMetadataFromFile(): "+e.getMessage());
+			//e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			logger.debug("readMetadataFromFile(): "+e.getMessage());
+			//e.printStackTrace();
+		}
+	}
+
+}
