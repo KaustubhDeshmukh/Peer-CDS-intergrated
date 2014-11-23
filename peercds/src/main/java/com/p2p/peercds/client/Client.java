@@ -91,7 +91,7 @@ public class Client extends Observable implements Runnable,
 	/** Optimistic unchokes are done every 2 loop iterations, i.e. every
 	 * 2*UNCHOKING_FREQUENCY seconds. */
 	private static final int OPTIMISTIC_UNCHOKE_ITERATIONS = 3;
-	private static final int CLOUD_FETCH_EVENT_ITERATIONS = 9;
+	private static final int CLOUD_FETCH_EVENT_ITERATIONS = 3;
 	private static final int RATE_COMPUTATION_ITERATIONS = 2;
 	private static final int MAX_DOWNLOADERS_UNCHOKE = 4;
 
@@ -414,6 +414,7 @@ public class Client extends Observable implements Runnable,
 					logger.info("Cloud event handling is alrady in progress. Ignoring this trigger....");
 			}catch(Exception e){
 				logger.error("Exception while posting the cloud fetch event" ,e);
+				e.printStackTrace();
 			}
 			}
 

@@ -53,12 +53,22 @@ public class CloudEventHandler {
 		ConcurrentMap<String, SharingPeer> connected = event.getConnected();
 		SharedTorrent torrent = event.getTorrent();
 		BitSet requestedPieces = torrent.getRequestedPieces();
-		BitSet availablePieces = torrent.getCompletedPieces();
+		BitSet availablePieces = null;
 		List<Integer> selectedPieceIndexList = new ArrayList<Integer>();
 
 		synchronized (requestedPieces) {
+			if(connected.size()==0){
+				logger.info("There are no peers connected for the download of this torrent.Getting the piece availability from the pieces completed till now ");
+				availablePieces = torrent.getCompletedPieces();
+			}else{
+				logger.info(connected.size()+" peers are connected for this download. Calculating piece availability based upon the piece availability stats from each peer");
+				availablePieces = new BitSet(torrent.getPieceCount());
+				for(SharingPeer peer : connected.values()){
+					availablePieces.or(peer.getAvailablePieces());
+				}			
+			}
 			synchronized (availablePieces) {
-
+				
 				if (availablePieces.cardinality() == torrent.getPieceCount()) {
 					logger.info("All the pieces are available, torrent download is complete. No action required.");
 					return;
@@ -126,10 +136,6 @@ public class CloudEventHandler {
 				logger.error("IOException while writing piece "+piece+" to the file. Marking piece as non-requested" , e);
 			}
 		}
-
-		logger.info("Number of peers connected for this torrent: "
-				+ connected.size());
-
 		lock.unlock();
 		logger.info("Cloud piece fetch event handling complete");
 	}
