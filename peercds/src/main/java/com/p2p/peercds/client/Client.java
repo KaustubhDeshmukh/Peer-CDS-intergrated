@@ -42,6 +42,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Strings;
 import com.google.common.eventbus.AsyncEventBus;
 import com.p2p.peercds.client.announce.Announce;
 import com.p2p.peercds.client.announce.AnnounceException;
@@ -90,7 +91,7 @@ public class Client extends Observable implements Runnable,
 	/** Optimistic unchokes are done every 2 loop iterations, i.e. every
 	 * 2*UNCHOKING_FREQUENCY seconds. */
 	private static final int OPTIMISTIC_UNCHOKE_ITERATIONS = 3;
-
+	private static final int CLOUD_FETCH_EVENT_ITERATIONS = 9;
 	private static final int RATE_COMPUTATION_ITERATIONS = 2;
 	private static final int MAX_DOWNLOADERS_UNCHOKE = 4;
 
@@ -374,17 +375,20 @@ public class Client extends Observable implements Runnable,
 
 		int optimisticIterations = 0;
 		int rateComputationIterations = 0;
+		int cloudFetchEventTriggerIterations = 0;
 
 		while (!this.stop) {
 			optimisticIterations =
 				(optimisticIterations == 0 ?
-				 Client.OPTIMISTIC_UNCHOKE_ITERATIONS :
+				 OPTIMISTIC_UNCHOKE_ITERATIONS :
 				 optimisticIterations - 1);
 
 			rateComputationIterations =
 				(rateComputationIterations == 0 ?
-				 Client.RATE_COMPUTATION_ITERATIONS :
+				 RATE_COMPUTATION_ITERATIONS :
 				 rateComputationIterations - 1);
+			
+			cloudFetchEventTriggerIterations = cloudFetchEventTriggerIterations == 0 ? CLOUD_FETCH_EVENT_ITERATIONS : cloudFetchEventTriggerIterations -1;
 
 			try {
 				this.unchokePeers(optimisticIterations == 0);
@@ -397,10 +401,20 @@ public class Client extends Observable implements Runnable,
 						"client main loop execution!", e);
 			}
 			
+			if(!torrent.isComplete() && cloudFetchEventTriggerIterations == 0){
 			try{
-				eventBus.post(new CloudFetchEvent(connected));
+				if(lock.tryLock()){
+					if(!Strings.isNullOrEmpty(torrent.getCloudKey()))
+				eventBus.post(new CloudFetchEvent(connected, torrent));
+					else
+						logger.info("Non peer-cds torrent. Skipping the cloud event trigger");
+					lock.unlock();
+				}
+				else
+					logger.info("Cloud event handling is alrady in progress. Ignoring this trigger....");
 			}catch(Exception e){
 				logger.error("Exception while posting the cloud fetch event" ,e);
+			}
 			}
 
 			try {
@@ -408,6 +422,7 @@ public class Client extends Observable implements Runnable,
 			} catch (InterruptedException ie) {
 				logger.trace("BitTorrent main loop interrupted.");
 			}
+		
 		}
 
 		logger.debug("Stopping BitTorrent client connection service " +
@@ -845,6 +860,7 @@ public class Client extends Observable implements Runnable,
 	public void handlePieceCompleted(SharingPeer peer, Piece piece)
 		throws IOException {
 		synchronized (this.torrent) {
+			String peerDescription = null;
 			if (piece.isValid()) {
 				// Make sure the piece is marked as completed in the torrent
 				// Note: this is required because the order the
@@ -852,11 +868,12 @@ public class Client extends Observable implements Runnable,
 				// might be called before the torrent's piece completion
 				// handler is.
 				this.torrent.markCompleted(piece);
+				peerDescription = peer != null ? peer.toString() : " cloud";
 				logger.debug("Completed download of {} from {}. " +
 					"We now have {}/{} pieces",
 					new Object[] {
 						piece,
-						peer,
+						peerDescription,
 						this.torrent.getCompletedPieces().cardinality(),
 						this.torrent.getPieceCount()
 					});
@@ -873,7 +890,7 @@ public class Client extends Observable implements Runnable,
 				this.notifyObservers(this.state);
 			} else {
 				logger.warn("Downloaded piece#{} from {} was not valid ;-(",
-					piece.getIndex(), peer);
+					piece.getIndex(), peerDescription);
 			}
 
 			if (this.torrent.isComplete()) {

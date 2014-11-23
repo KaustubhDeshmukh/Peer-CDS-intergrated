@@ -165,6 +165,10 @@ public class Piece implements Comparable<Piece> {
 
 		return this.isValid();
 	}
+	
+	public long getOffset() {
+		return offset;
+	}
 
 	/**
 	 * Internal piece data read function.

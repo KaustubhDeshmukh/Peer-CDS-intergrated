@@ -29,5 +29,9 @@ public class Constants {
 			.put("}", "Y").build();
 	
 	public static final String DIRECTORY_RANGE_FETCH_KEY_FORMAT = "%s/%s";
+	
+	public static final String KEY_BUCKET_FORMAT = "%s/%s";
+	
+	public static final float CLOUD_PIECE_FETCH_RATIO = 0.10f;
 
 }

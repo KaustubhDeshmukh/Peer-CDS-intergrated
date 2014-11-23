@@ -313,12 +313,12 @@ public class CloudHelper {
 
 		byte[] data = downloadPiece(bucketName, String.format(
 				DIRECTORY_RANGE_FETCH_KEY_FORMAT, s3DirectoryPrefix, fileName),
-				offset, offset + length, true);
+				Long.valueOf(offset), Long.valueOf(offset + length), true);
 
 		return data;
 	}
 
-	public static byte[] downloadPieceFromFile(String bucketName, String key)
+	public static byte[] downloadCompleteFile(String bucketName, String key)
 			throws TruncatedPieceReadException, S3ObjectNotFoundException,
 			FetchSizeExceededException, S3FetchException {
 
@@ -340,7 +340,7 @@ public class CloudHelper {
 	 */
 
 	public static byte[] downloadPiece(String bucketName, String key,
-			Integer startByteIndex, Integer endByteIndex,
+			Long startByteIndex, Long endByteIndex,
 			boolean isDirectoryFetch) throws TruncatedPieceReadException,
 			S3ObjectNotFoundException, FetchSizeExceededException,
 			S3FetchException {

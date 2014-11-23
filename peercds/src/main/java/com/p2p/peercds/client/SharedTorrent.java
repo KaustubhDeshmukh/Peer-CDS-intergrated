@@ -98,7 +98,6 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 	private SortedSet<Piece> rarest;
 	private BitSet completedPieces;
 	private BitSet requestedPieces;
-	
 	private double maxUploadRate = 0.0;
 	private double maxDownloadRate = 0.0;
 	/**
@@ -333,7 +332,6 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 		this.pieces = new Piece[nPieces];
 		this.completedPieces = new BitSet(nPieces);
 		this.piecesHashes.clear();
-
 		ExecutorService executor = Executors.newFixedThreadPool(threads);
 		List<Future<Piece>> results = new LinkedList<Future<Piece>>();
 
@@ -887,5 +885,10 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 	public SortedSet<Piece> getRarest() {
 		return rarest;
 	}
-		
+	
+	public void setPieceRequested(int pieceIndex){
+		requestedPieces.set(pieceIndex);
+	}
+	
+	
 }

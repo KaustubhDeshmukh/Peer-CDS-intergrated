@@ -342,7 +342,7 @@ public class Torrent {
 	/**
 	 * Tells whether this torrent is multi-file or not.
 	 */
-	public boolean isMultifile() {
+	protected boolean isMultifile() {
 		return this.files.size() > 1;
 	}
 
