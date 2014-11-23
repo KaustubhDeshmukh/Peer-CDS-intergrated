@@ -13,6 +13,7 @@ import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,8 +73,8 @@ public class CloudHelper {
 		File file = new File("/Users/kaustubh/Desktop/mfile");
 		uploadTorrent("peer-cds", "mfile1", file);
 		// downloadPiece("peer-cds", "mfile1/abc.pdf" , 10 , 11, false);
-		//downloadCompleteDirectory(BUCKET_NAME, "mfile");
-		downloadByteRangeFromDirectory(BUCKET_NAME, "mfile", "abc.pdf", 0, 117143);
+		downloadCompleteDirectory(BUCKET_NAME, "mfile");
+		//downloadByteRangeFromDirectory(BUCKET_NAME, "mfile", "abc.pdf", 0, 117143);
 
 	}
 
@@ -216,6 +217,7 @@ public class CloudHelper {
 					channel.read(holder);
 					channel.close();
 				}
+				FileUtils.deleteDirectory(actual);
 			} catch (Exception e) {
 				logger.error(
 						"Exception while reading the downloaded directory  with key "
