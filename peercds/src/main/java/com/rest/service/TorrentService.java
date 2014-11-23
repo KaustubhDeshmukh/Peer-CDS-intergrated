@@ -323,11 +323,9 @@ public class TorrentService {
 	public Response downloadTorrent(){
 		
 		
-<<<<<<< HEAD
+
 	        return Response.ok(new Viewable("/index.html")).build();
-=======
-	     return Response.ok(new Viewable("/jsp/index.html")).build();
->>>>>>> c1dd5227c9a8e74cd170c8110e6caab228507412
+
 	    
 	}
 }
