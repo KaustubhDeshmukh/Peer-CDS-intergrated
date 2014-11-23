@@ -157,8 +157,9 @@ public class ClientMain {
 
 		try {
 			Lock lock = new ReentrantLock();
-			AsyncEventBus eventBus = new AsyncEventBus("cloudEventBus", Executors.newFixedThreadPool(5));
-			CloudEventHandler handler = new CloudEventHandler(lock, eventBus);
+			CloudEventHandler handler = new CloudEventHandler(lock);
+			AsyncEventBus eventBus = new AsyncEventBus (Executors.newFixedThreadPool(5),handler);
+			eventBus.register(handler);
 			Client c = new Client(
 				getIPv4Address(ifaceValue),
 				SharedTorrent.fromFile(

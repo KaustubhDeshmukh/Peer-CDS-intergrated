@@ -1,6 +1,9 @@
 package com.p2p.peercds.common;
 
-import static com.p2p.peercds.common.Constants.*;
+import static com.p2p.peercds.common.Constants.BUCKET_NAME;
+import static com.p2p.peercds.common.Constants.CLOUD_PIECE_FETCH_RATIO;
+import static com.p2p.peercds.common.Constants.KEY_BUCKET_FORMAT;
+import static com.p2p.peercds.common.Constants.PIECE_LENGTH;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -8,7 +11,6 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
@@ -18,31 +20,28 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.eventbus.SubscriberExceptionContext;
+import com.google.common.eventbus.SubscriberExceptionHandler;
 import com.p2p.peercds.client.Piece;
 import com.p2p.peercds.client.SharedTorrent;
 import com.p2p.peercds.client.peer.PeerActivityListener;
 import com.p2p.peercds.client.peer.SharingPeer;
 
-public class CloudEventHandler {
+public class CloudEventHandler implements SubscriberExceptionHandler{
 
 	private static final Logger logger = LoggerFactory
 			.getLogger(CloudEventHandler.class);
 
 	private Lock lock;
-
-	private AsyncEventBus eventBus;
-
 	private Set<PeerActivityListener> peerActivityListners;
 
 	public CloudEventHandler() {
 		logger.info("Empty constructor called");
 	}
 
-	public CloudEventHandler(Lock lock, AsyncEventBus eventBus) {
+	public CloudEventHandler(Lock lock) {
 		super();
 		this.lock = lock;
-		this.eventBus = eventBus;
-		eventBus.register(this);
 		this.peerActivityListners = new HashSet<PeerActivityListener>();
 	}
 
@@ -152,5 +151,11 @@ public class CloudEventHandler {
 
 	public void registerPeerActivityListener(PeerActivityListener listener) {
 		peerActivityListners.add(listener);
+	}
+
+	@Override
+	public void handleException(Throwable exception,
+			SubscriberExceptionContext context) {
+		logger.error("Error handling the cloud fetch event: Reason: "+exception.getMessage(), exception);
 	}
 }
