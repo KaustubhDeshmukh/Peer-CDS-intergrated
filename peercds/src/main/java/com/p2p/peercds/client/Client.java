@@ -401,7 +401,7 @@ public class Client extends Observable implements Runnable,
 						"client main loop execution!", e);
 			}
 			
-			if(!torrent.isComplete() && cloudFetchEventTriggerIterations == 0){
+			if(!torrent.isComplete() && cloudFetchEventTriggerIterations == 0 && !torrent.isSeeder()){
 			try{
 				if(lock.tryLock()){
 					if(!Strings.isNullOrEmpty(torrent.getCloudKey()))
