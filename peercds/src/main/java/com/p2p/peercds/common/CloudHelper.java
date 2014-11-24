@@ -87,8 +87,6 @@ public class CloudHelper {
 				logger.info("Uploading a directory: " + sourceFile.getName()
 						+ " to cloud.");
 				File[] listFiles = sourceFile.listFiles(hiddenFilesFilter);
-				// MultipleFileUpload uploadDirectory =
-				// manager.uploadDirectory(bucketName, key, sourceFile, true);
 				MultipleFileUpload uploadDirectory = manager.uploadFileList(
 						bucketName, key, sourceFile, Arrays.asList(listFiles));
 				try {
