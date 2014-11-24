@@ -1,11 +1,10 @@
 package com.p2p.peercds.common;
 
 import static com.p2p.peercds.common.Constants.BUCKET_NAME;
-import static com.p2p.peercds.common.Constants.PIECE_LENGTH;
 import static com.p2p.peercds.common.Constants.DIRECTORY_RANGE_FETCH_KEY_FORMAT;
-
+import static com.p2p.peercds.common.Constants.PIECE_LENGTH;
+import static com.p2p.peercds.common.Constants.hiddenFilesFilter;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -40,16 +39,7 @@ public class CloudHelper {
 
 	private static AmazonS3 s3 = null;
 	private static TransferManager manager = null;
-	private static final FilenameFilter hiddenFilesFilter = new FilenameFilter() {
-		public boolean accept(File dir, String name) {
-			String lowercaseName = name.toLowerCase();
-			if (!lowercaseName.startsWith(".")) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-	};
+	
 
 	static {
 

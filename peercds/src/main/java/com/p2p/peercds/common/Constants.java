@@ -1,5 +1,7 @@
 package com.p2p.peercds.common;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
@@ -33,5 +35,16 @@ public class Constants {
 	public static final String KEY_BUCKET_FORMAT = "%s/%s";
 	
 	public static final float CLOUD_PIECE_FETCH_RATIO = 0.10f;
+	
+	public static final FilenameFilter hiddenFilesFilter = new FilenameFilter() {
+		public boolean accept(File dir, String name) {
+			String lowercaseName = name.toLowerCase();
+			if (!lowercaseName.startsWith(".")) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+	};
 
 }
