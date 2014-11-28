@@ -149,8 +149,11 @@ public class ClientWrapper {
 
 	public GenericResponseStatusMapper setDefaultDirectory(String directory){
 
+		GenericResponseStatusMapper response = new GenericResponseStatusMapper();
+		
 		if(directory != null && !directory.equalsIgnoreCase("")){
 
+			
 
 			if(!directory.endsWith("/")){
 				directory = directory.concat("/");
@@ -158,10 +161,17 @@ public class ClientWrapper {
 
 			//directory = directory.replaceAll("/", "//");
 
+			File file = new File(directory);
+			if(!file.isDirectory()){
+				response.setSuccess("false");
+				response.setMessage("Directory not found!!");
+				return response;
+			}
+			
 			setDEFAULT_OUTPUT_DIRECTORY(directory);
 
 			logger.info("setDefaultDirectory(): Default Directory set to: "+directory);
-			GenericResponseStatusMapper response = new GenericResponseStatusMapper();
+			
 			response.setSuccess("true");
 			response.setMessage("Default directory set sucessfully");
 			return response;
@@ -169,9 +179,9 @@ public class ClientWrapper {
 		else{
 			
 			logger.info("setDefaultDirectory(): Bad Request");
-			GenericResponseStatusMapper response = new GenericResponseStatusMapper();
+			
 			response.setSuccess("false");
-			response.setMessage("Default directory could not be set. Please enter default directory");
+			response.setMessage("Default directory not be set. Please enter default directory");
 			return response;
 		}
 
@@ -197,7 +207,7 @@ public class ClientWrapper {
 			Entry<String, ClientMetadata> clientEntry = iterator.next();
 			ClientMetadata clientMetadata = clientEntry.getValue();
 
-			if(!clientMetadata.isPaused()){
+			if(!clientMetadata.isPaused() || !clientMetadata.isError()){
 				
 				
 				Client client = clientMetadata.getClient();
