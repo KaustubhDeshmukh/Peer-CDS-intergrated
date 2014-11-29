@@ -234,9 +234,15 @@ public class ClientWrapper {
 				metadata.setUploadSpeed(String.format("%.2f", ul/1024.0));
 
 				// set size
-				long size = client.getTorrent().getSize();
-				metadata.setSize(String.valueOf(size/1024));
-
+				long size = client.getTorrent().getSize()/1024;
+				
+				if(size > 1024*1024){
+					metadata.setSize(String.valueOf(size/(1024*1024))+"GB");
+				} else if(size > 1024){
+					metadata.setSize(String.valueOf(size/1024)+"MB");
+				} else {
+					metadata.setSize(String.valueOf(size)+"kB");
+				}
 				//set eta
 				metadata.setEta(String.valueOf(size/dl/60));
 
