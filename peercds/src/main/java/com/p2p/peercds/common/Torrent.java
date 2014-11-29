@@ -15,10 +15,11 @@
  */
 package com.p2p.peercds.common;
 
-import com.p2p.peercds.bcodec.BDecoder;
-import com.p2p.peercds.bcodec.BEValue;
-import com.p2p.peercds.bcodec.BEncoder;
-import com.p2p.peercds.client.peer.CloudPeer;
+import static com.p2p.peercds.common.Constants.BUCKET_NAME;
+import static com.p2p.peercds.common.Constants.BYTE_ENCODING;
+import static com.p2p.peercds.common.Constants.CLOUD_KEY;
+import static com.p2p.peercds.common.Constants.PIECE_LENGTH;
+import static com.p2p.peercds.common.Constants.SPECIAL_TO_NSP_MAP;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -54,6 +55,11 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Strings;
+import com.p2p.peercds.bcodec.BDecoder;
+import com.p2p.peercds.bcodec.BEValue;
+import com.p2p.peercds.bcodec.BEncoder;
+
 /**
  * A torrent file tracked by the controller's BitTorrent tracker.
  *
@@ -77,14 +83,6 @@ public class Torrent {
 	private static final Logger logger =
 		LoggerFactory.getLogger(Torrent.class);
 
-	/** Torrent file piece length (in bytes), we use 512 kB. */
-	private static final int PIECE_LENGTH = 512 * 1024;
-
-	public static final int PIECE_HASH_SIZE = 20;
-
-	/** The query parameters encoding when parsing byte strings. */
-	public static final String BYTE_ENCODING = "ISO-8859-1";
-
 	/**
 	 *
 	 * @author dgiffin
@@ -106,6 +104,7 @@ public class Torrent {
 	protected final byte[] encoded_info;
 	protected final Map<String, BEValue> decoded;
 	protected final Map<String, BEValue> decoded_info;
+	protected final String cloudKey;
 
 	private final byte[] info_hash;
 	private final String hex_info_hash;
@@ -200,6 +199,8 @@ public class Torrent {
 			throw new IOException(use);
 		}
 
+		this.cloudKey = this.decoded.containsKey(CLOUD_KEY)?this.decoded.get(CLOUD_KEY).getString():"";
+		
 		this.creationDate = this.decoded.containsKey("creation date")
 			? new Date(this.decoded.get("creation date").getLong() * 1000)
 			: null;
@@ -257,6 +258,11 @@ public class Torrent {
 		if (this.creationDate != null) {
 			logger.info("  Created on..: {}", this.creationDate);
 		}
+		if(!Strings.isNullOrEmpty(cloudKey))
+			logger.info("Seems to be a peercds supported torrent. Cloud-key for this torrent is: "+cloudKey);
+		else
+			logger.info(" As cloud-key is not present, this torrent seems to be created by non-peercds torrent client, all the cloud based optimizations will not be available in this activity ");
+		
 		if (this.comment != null) {
 			logger.info("  Comment.....: {}", this.comment);
 		}
@@ -336,7 +342,7 @@ public class Torrent {
 	/**
 	 * Tells whether this torrent is multi-file or not.
 	 */
-	public boolean isMultifile() {
+	protected boolean isMultifile() {
 		return this.files.size() > 1;
 	}
 
@@ -425,7 +431,7 @@ public class Torrent {
 	 */
 	public static String toHexString(String input) {
 		try {
-			byte[] bytes = input.getBytes(Torrent.BYTE_ENCODING);
+			byte[] bytes = input.getBytes(BYTE_ENCODING);
 			return Torrent.byteArrayToHexString(bytes);
 		} catch (UnsupportedEncodingException uee) {
 			return null;
@@ -633,12 +639,12 @@ public class Torrent {
 
 		Map<String, BEValue> info = new HashMap<String, BEValue>();
 		info.put("name", new BEValue(parent.getName()));
-		info.put("piece length", new BEValue(Torrent.PIECE_LENGTH));
+		info.put("piece length", new BEValue(PIECE_LENGTH));
 
 		if (files == null || files.isEmpty()) {
 			info.put("length", new BEValue(parent.length()));
 			info.put("pieces", new BEValue(Torrent.hashFile(parent),
-				Torrent.BYTE_ENCODING));
+				BYTE_ENCODING));
 		} else {
 			List<BEValue> fileInfo = new LinkedList<BEValue>();
 			for (File file : files) {
@@ -660,7 +666,7 @@ public class Torrent {
 			}
 			info.put("files", new BEValue(fileInfo));
 			BEValue piecesValue = new BEValue(Torrent.hashFiles(files),
-					Torrent.BYTE_ENCODING);
+					BYTE_ENCODING);
 			info.put("pieces", piecesValue);
 			
 		}
@@ -683,18 +689,35 @@ public class Torrent {
 				s = (short) (s - 127);
 				if (s< 32)
 					s = (short) (s + 32);
-			}
+			}else if(s < 32)
+				s = (short) (s + 32);
 			transformedDigest[i++] = (byte) s;
 		}
-		System.out.println("digest str "+new String(digest));
-		System.out.println("transformed digest str "+new String(transformedDigest));
-		String cloudKeyForFile = new String(transformedDigest);
+		for(byte b:transformedDigest)
+			logger.debug(new Byte(b).toString());
+		logger.info("digest str "+new String(digest));
+		logger.info("transformed digest str "+new String(transformedDigest));
+		logger.info("Replacing special characters in the cloud key with regular characters");
+		String cloudKeyForFile = new String(transformedDigest,"UTF-8");
+		for( String nsChar :  SPECIAL_TO_NSP_MAP.keySet()){
+			if(cloudKeyForFile.contains(nsChar))
+				cloudKeyForFile = cloudKeyForFile.replaceAll(java.util.regex.Pattern.quote(nsChar), SPECIAL_TO_NSP_MAP.get(nsChar));
+		}
+	
+		logger.info("Sanitized cloud Key: "+cloudKeyForFile);
+		boolean success = false;
+		try {
+			success = CloudHelper.uploadTorrent(BUCKET_NAME, cloudKeyForFile.trim(), parent);
+		} catch (S3FetchException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if(!success)
+			logger.info("File won't be uploaded to cloud as file is present in swarm and uploaded to cloud");
+		else
+			logger.info("New file has been introduced in the swarm and has been uploaded to the cloud");
 		
-		System.out.println("Cloud Key: "+cloudKeyForFile);
-		CloudPeer cloudPeer = new CloudPeer();
-		cloudPeer.uploadTorrent("peercds", cloudKeyForFile, parent);
-		
-		torrent.put("cloud key", new BEValue(cloudKeyForFile));
+		torrent.put(CLOUD_KEY, new BEValue(cloudKeyForFile));
 		
 		TreeMap<String, BEValue> sortTorrentMap = new TreeMap<String, BEValue>();
 		sortTorrentMap.putAll(torrent);
@@ -731,7 +754,7 @@ public class Torrent {
 		public String call() throws UnsupportedEncodingException {
 			this.md.reset();
 			this.md.update(this.data.array());
-			return new String(md.digest(), Torrent.BYTE_ENCODING);
+			return new String(md.digest(), BYTE_ENCODING);
 		}
 	}
 
@@ -759,7 +782,7 @@ public class Torrent {
 		throws InterruptedException, IOException {
 		int threads = getHashingThreadsCount();
 		ExecutorService executor = Executors.newFixedThreadPool(threads);
-		ByteBuffer buffer = ByteBuffer.allocate(Torrent.PIECE_LENGTH);
+		ByteBuffer buffer = ByteBuffer.allocate(PIECE_LENGTH);
 		List<Future<String>> results = new LinkedList<Future<String>>();
 		StringBuilder hashes = new StringBuilder();
 
@@ -773,7 +796,7 @@ public class Torrent {
 					file.getName(),
 					threads,
 					(int) (Math.ceil(
-						(double)file.length() / Torrent.PIECE_LENGTH))
+						(double)file.length() / PIECE_LENGTH))
 				});
 
 			length += file.length();
@@ -822,7 +845,7 @@ public class Torrent {
 		long elapsed = System.nanoTime() - start;
 
 		int expectedPieces = (int) (Math.ceil(
-				(double)length / Torrent.PIECE_LENGTH));
+				(double)length / PIECE_LENGTH));
 		logger.info("Hashed {} file(s) ({} bytes) in {} pieces ({} expected) in {}ms.",
 			new Object[] {
 				files.size(),

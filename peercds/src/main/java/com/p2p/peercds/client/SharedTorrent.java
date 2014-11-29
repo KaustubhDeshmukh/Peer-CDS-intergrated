@@ -43,6 +43,7 @@ import com.p2p.peercds.client.storage.FileCollectionStorage;
 import com.p2p.peercds.client.storage.FileStorage;
 import com.p2p.peercds.client.storage.TorrentByteStorage;
 import com.p2p.peercds.common.Torrent;
+import static com.p2p.peercds.common.Constants.*;
 
 
 /**
@@ -91,13 +92,12 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 
 	private final int pieceLength;
 	private final ByteBuffer piecesHashes;
-
+	
 	private boolean initialized;
 	private Piece[] pieces;
 	private SortedSet<Piece> rarest;
 	private BitSet completedPieces;
 	private BitSet requestedPieces;
-	
 	private double maxUploadRate = 0.0;
 	private double maxDownloadRate = 0.0;
 	/**
@@ -183,7 +183,7 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 			this.piecesHashes = ByteBuffer.wrap(this.decoded_info.get("pieces")
 					.getBytes());
 
-			if (this.piecesHashes.capacity() / Torrent.PIECE_HASH_SIZE *
+			if (this.piecesHashes.capacity() / PIECE_HASH_SIZE *
 					(long)this.pieceLength < this.getSize()) {
 				throw new IllegalArgumentException("Torrent size does not " +
 						"match the number of pieces and the piece size!");
@@ -332,7 +332,6 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 		this.pieces = new Piece[nPieces];
 		this.completedPieces = new BitSet(nPieces);
 		this.piecesHashes.clear();
-
 		ExecutorService executor = Executors.newFixedThreadPool(threads);
 		List<Future<Piece>> results = new LinkedList<Future<Piece>>();
 
@@ -340,7 +339,7 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 			logger.info("Analyzing local data for {} with {} threads ({} pieces)...",
 				new Object[] { this.getName(), threads, nPieces });
 			for (int idx=0; idx<nPieces; idx++) {
-				byte[] hash = new byte[Torrent.PIECE_HASH_SIZE];
+				byte[] hash = new byte[PIECE_HASH_SIZE];
 				this.piecesHashes.get(hash);
 
 				// The last piece may be shorter than the torrent's global piece
@@ -854,4 +853,42 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 	@Override
 	public synchronized void handleIOException(SharingPeer peer,
 			IOException ioe) { /* Do nothing */ }
+
+	public static int getRarestPieceJitter() {
+		return RAREST_PIECE_JITTER;
+	}
+
+	public static float getEngGameCompletionRatio() {
+		return ENG_GAME_COMPLETION_RATIO;
+	}
+
+	public TorrentByteStorage getBucket() {
+		return bucket;
+	}
+
+	public int getPieceLength() {
+		return pieceLength;
+	}
+
+	public ByteBuffer getPiecesHashes() {
+		return piecesHashes;
+	}
+
+	public String getCloudKey() {
+		return cloudKey;
+	}
+
+	public Piece[] getPieces() {
+		return pieces;
+	}
+
+	public SortedSet<Piece> getRarest() {
+		return rarest;
+	}
+	
+	public void setPieceRequested(int pieceIndex){
+		requestedPieces.set(pieceIndex);
+	}
+	
+	
 }

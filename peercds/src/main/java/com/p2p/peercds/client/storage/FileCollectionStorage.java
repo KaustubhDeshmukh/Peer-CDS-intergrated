@@ -140,18 +140,36 @@ public class FileCollectionStorage implements TorrentByteStorage {
 	 * @author dgiffin
 	 * @author mpetazzoni
 	 */
-	private static class FileOffset {
+	public static class FileOffset {
 
-		public final FileStorage file;
-		public final long offset;
-		public final long length;
+		private final FileStorage file;
+		private final long offset;
+		private final long length;
+		private final String fileName;
 
 		FileOffset(FileStorage file, long offset, long length) {
 			this.file = file;
 			this.offset = offset;
 			this.length = length;
+			this.fileName = file.getFileName();
 		}
-	};
+
+		public FileStorage getFile() {
+			return file;
+		}
+
+		public long getOffset() {
+			return offset;
+		}
+
+		public long getLength() {
+			return length;
+		}
+
+		public String getFileName() {
+			return fileName;
+		}
+	}
 
 	/**
 	 * Select the group of files impacted by an operation.
@@ -172,7 +190,7 @@ public class FileCollectionStorage implements TorrentByteStorage {
 	 * @throws IllegalStateException If the files registered with this byte
 	 * storage can't accommodate the request (should not happen, really).
 	 */
-	private List<FileOffset> select(long offset, long length) {
+	public List<FileOffset> select(long offset, long length) {
 		if (offset + length > this.size) {
 			throw new IllegalArgumentException("Buffer overrun (" +
 				offset + " + " + length + " > " + this.size + ") !");

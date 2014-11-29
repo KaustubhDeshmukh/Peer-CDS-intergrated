@@ -218,10 +218,10 @@ public class UDPAnnounceRequestMessage
 		}
 
 		if (! (ip instanceof Inet4Address)) {
+			System.out.println("An attempt to use non-IPv4 address in the UDP announce request, address used is: "+ip.getHostAddress());
 			throw new IllegalArgumentException("Only IPv4 addresses are " +
 				"supported by the UDP tracer protocol!");
 		}
-
 		ByteBuffer data = ByteBuffer.allocate(UDP_ANNOUNCE_REQUEST_MESSAGE_SIZE);
 		data.putLong(connectionId);
 		data.putInt(Type.ANNOUNCE_REQUEST.getId());

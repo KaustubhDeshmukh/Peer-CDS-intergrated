@@ -15,13 +15,12 @@
  */
 package com.p2p.peercds.common.protocol.udp;
 
-import com.p2p.peercds.common.Torrent;
-import com.p2p.peercds.common.protocol.TrackerMessage;
+import static com.p2p.peercds.common.Constants.BYTE_ENCODING;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
-
+import com.p2p.peercds.common.protocol.TrackerMessage;
 /**
  * The error message for the UDP tracker protocol.
  *
@@ -78,7 +77,7 @@ public class UDPTrackerErrorMessage
 		try {
 			return new UDPTrackerErrorMessage(data,
 				transactionId,
-				new String(reasonBytes, Torrent.BYTE_ENCODING)
+				new String(reasonBytes, BYTE_ENCODING)
 			);
 		} catch (UnsupportedEncodingException uee) {
 			throw new MessageValidationException(
@@ -88,7 +87,7 @@ public class UDPTrackerErrorMessage
 
 	public static UDPTrackerErrorMessage craft(int transactionId,
 		String reason) throws UnsupportedEncodingException {
-		byte[] reasonBytes = reason.getBytes(Torrent.BYTE_ENCODING);
+		byte[] reasonBytes = reason.getBytes(BYTE_ENCODING);
 		ByteBuffer data = ByteBuffer
 			.allocate(UDP_TRACKER_ERROR_MIN_MESSAGE_SIZE +
 				reasonBytes.length);

@@ -1,26 +1,26 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.p2p</groupId>
-  <artifactId>peercds</artifactId>
-  <packaging>war</packaging>
-  <version>1.0</version>
-  <name>peercds Maven Webapp</name>
-  <url>http://maven.apache.org</url>
-  
-  <description>
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.p2p</groupId>
+	<artifactId>peercds</artifactId>
+	<packaging>war</packaging>
+	<version>1.0</version>
+	<name>peercds Maven Webapp</name>
+	<url>http://maven.apache.org</url>
+
+	<description>
 		peercds is a pure-Java implementation of the BitTorrent protocol and it is a extension of,
 		ttorrent (http://mpetazzoni.github.io/ttorrent) to enable the amazon cloud interaction
 		for the upload and download of the torrent data files to make the P2P reliable and 
 		to distribute the cloud contents through P2P
 	</description>
-	
+
 	<issueManagement>
 		<system>GitHub</system>
 		<url>https://github.com/KaustubhDeshmukh/Peer-CDS-intergrated/issues</url>
 	</issueManagement>
-  
-  <repositories>
+
+	<repositories>
 		<repository>
 			<id>jboss-thirdparty-releases</id>
 			<name>JBoss Thirdparty Releases</name>
@@ -33,18 +33,18 @@
 			<layout>default</layout>
 		</repository>
 	</repositories>
-	
+
 	<scm>
 		<connection>scm:git:git://github.com/KaustubhDeshmukh/Peer-CDS-intergrated.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com:KaustubhDeshmukh/Peer-CDS-intergrated.git</developerConnection>
 		<url>https://github.com/KaustubhDeshmukh/Peer-CDS-intergrated</url>
-		<tag>master</tag>		
+		<tag>master</tag>
 	</scm>
-	
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-	
+
 	<licenses>
 		<license>
 			<name>Apache Software License version 2.0</name>
@@ -53,6 +53,13 @@
 	</licenses>
 
 	<dependencies>
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-coyote</artifactId>
+			<version>7.0.56</version>
+			<scope>compile</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
@@ -114,20 +121,25 @@
 			<artifactId>cors-filter</artifactId>
 			<version>1.9.3</version>
 		</dependency>
-		
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>18.0</version>
+		</dependency>
+
 	</dependencies>
 
-  <build>
-    <finalName>peercds</finalName>
-    <plugins>
-        <plugin>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <version>2.0.2</version>
-            <configuration>
-                <source>1.6</source>
-                <target>1.6</target>
-            </configuration>
-        </plugin>
-    </plugins>
-  </build>
+	<build>
+		<finalName>peercds</finalName>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.0.2</version>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

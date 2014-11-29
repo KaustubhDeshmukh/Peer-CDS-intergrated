@@ -15,8 +15,7 @@
  */
 package com.p2p.peercds.cli;
 
-import com.p2p.peercds.client.Client;
-import com.p2p.peercds.client.SharedTorrent;
+import jargs.gnu.CmdLineParser;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -27,14 +26,20 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.Enumeration;
-
-import jargs.gnu.CmdLineParser;
+import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.PatternLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.eventbus.AsyncEventBus;
+import com.p2p.peercds.client.Client;
+import com.p2p.peercds.client.SharedTorrent;
+import com.p2p.peercds.common.CloudEventHandler;
 
 /**
  * Command-line entry-point for starting a {@link Client}
@@ -87,7 +92,7 @@ public class ClientMain {
 		if (localhost instanceof Inet4Address) {
 			return (Inet4Address)localhost;
 		}
-
+		logger.info("No IPv4 address found for initialization of the client, address associated with localhost is: "+localhost.getHostAddress());
 		throw new UnsupportedAddressTypeException();
 	}
 
@@ -151,11 +156,16 @@ public class ClientMain {
 		}
 
 		try {
+			Lock lock = new ReentrantLock();
+			CloudEventHandler handler = new CloudEventHandler(lock);
+			AsyncEventBus eventBus = new AsyncEventBus (Executors.newFixedThreadPool(5),handler);
+			eventBus.register(handler);
 			Client c = new Client(
 				getIPv4Address(ifaceValue),
 				SharedTorrent.fromFile(
 					new File(otherArgs[0]),
-					new File(outputValue)));
+					new File(outputValue)), lock , eventBus , handler);
+
 
 			c.setMaxDownloadRate(maxDownloadRate);
 			c.setMaxUploadRate(maxUploadRate);
@@ -179,11 +189,17 @@ public class ClientMain {
 		
 		Client c = null;
 		try {
-			 c = new Client(
+			 
+			Lock lock = new ReentrantLock();
+			CloudEventHandler handler = new CloudEventHandler(lock);
+			AsyncEventBus eventBus = new AsyncEventBus (Executors.newFixedThreadPool(5),handler);
+			eventBus.register(handler);
+			c = new Client(
 				getIPv4Address(null),
 				SharedTorrent.fromFile(
 					new File(defaultDirectory+torrentName),
-					new File(defaultDirectory)));
+					new File(defaultDirectory)), lock , eventBus , handler);
+
 
 			c.setMaxDownloadRate(0.0);
 			c.setMaxUploadRate(0.0);
@@ -195,9 +211,11 @@ public class ClientMain {
 
 			c.share(-1);
 			if (Client.ClientState.ERROR.equals(c.getState())) {
-				return null;
-				//System.exit(1);
+				System.exit(1);
 			}
+			
+			
+			
 			return c;
 		} catch (Exception e) {
 			logger.error("Fatal error: {}", e.getMessage(), e);

@@ -21,8 +21,10 @@ import com.p2p.peercds.tracker.Tracker;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.PrintStream;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 
 import jargs.gnu.CmdLineParser;
 
@@ -101,7 +103,7 @@ public class TrackerMain {
 		};
 
 		try {
-			Tracker t = new Tracker(new InetSocketAddress(portValue.intValue()));
+			Tracker t = new Tracker(new InetSocketAddress(getLocalAddrress(),portValue.intValue()));
 
 					
 			File parent = new File(directory);
@@ -117,5 +119,13 @@ public class TrackerMain {
 			logger.error("{}", e.getMessage(), e);
 			System.exit(2);
 		}
+	}
+	
+	private static Inet4Address getLocalAddrress() throws UnknownHostException{
+	InetAddress localhost = InetAddress.getLocalHost();
+	if (localhost instanceof Inet4Address) {
+		return (Inet4Address)localhost;
+	}else
+		return null;
 	}
 }
