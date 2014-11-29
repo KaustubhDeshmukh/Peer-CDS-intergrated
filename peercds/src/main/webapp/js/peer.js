@@ -86,13 +86,13 @@ $(function(){
     });
     
     $('#downloading_files').click(function(){
-    	myobject.status='downloading';
+    	myobject.status='Downloading';
     	setInterval(timer, 3000);
     	timer();
     });
     
     $('#seeding_files').click(function(){
-    	myobject.status='seeding';
+    	myobject.status='Seeding';
     	setInterval(timer, 3000);
     	timer();
     });

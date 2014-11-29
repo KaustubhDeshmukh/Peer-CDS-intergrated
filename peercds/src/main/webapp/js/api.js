@@ -155,7 +155,7 @@ var peerApi={
 				success:function(res){
 					if(res.message!=undefined){
 						alert(res.message);
-//						$('#common-alert-modal').show();
+						//$('#common-alert-modal').show();
 						//pop message
 					}
 				},
