@@ -184,7 +184,7 @@ public class TorrentMain {
 		}
 	}
 
-	public static String createTorrent(String directory, String fileName) throws Exception{
+	public static String createTorrent(String directory, String fileName, String trackerURL) throws Exception{
 
 		String response = null;
 		OutputStream fos = null;

@@ -123,7 +123,7 @@ public class TorrentService {
 			
 			requestMap = mapper.readValue(requestJson, Map.class);
 			
-			CreateTorrentResponseMapper response = clientWrapper.createTorrent( requestMap.get("filename"));
+			CreateTorrentResponseMapper response = clientWrapper.createTorrent( requestMap.get("filename"),requestMap.get("trackerurl"));
 			
 			responseString = mapper.writeValueAsString(response);
 			

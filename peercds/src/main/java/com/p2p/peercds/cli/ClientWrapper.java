@@ -83,20 +83,20 @@ public class ClientWrapper {
 		logger.info("setDEFAULT_OUTPUT_DIRECTORY(): Default directory set to: "+dEFAULT_OUTPUT_DIRECTORY);
 	}
 
-	public CreateTorrentResponseMapper createTorrent(String fileName){
+	public CreateTorrentResponseMapper createTorrent(String fileName, String trackerURL){
 
 		CreateTorrentResponseMapper response = new CreateTorrentResponseMapper();
 
 		try{
 
-			TorrentMain.createTorrent(DEFAULT_OUTPUT_DIRECTORY, fileName);
+			TorrentMain.createTorrent(DEFAULT_OUTPUT_DIRECTORY, fileName, trackerURL);
 			logger.info("createTorrent(): Torrent file created in directory: "+getDEFAULT_OUTPUT_DIRECTORY());
 
 		} catch (IllegalArgumentException e){
 
 			logger.info("createTorrent(): Could not create "+fileName+" in directory: "+getDEFAULT_OUTPUT_DIRECTORY()+" Error: "+e.getMessage());
 			response.setSuccess("false");
-			response.setMessage("Torrent Start Failed: File not found in the default directory");
+			response.setMessage("Torrent Start Failed: Data file not found in the default directory");
 			return response;
 
 		} catch (Exception e){
@@ -162,7 +162,7 @@ public class ClientWrapper {
 			//directory = directory.replaceAll("/", "//");
 
 			File file = new File(directory);
-			if(!file.isDirectory()){
+			if(!file.exists() || !file.isDirectory()){
 				response.setSuccess("false");
 				response.setMessage("Directory not found!!");
 				return response;
