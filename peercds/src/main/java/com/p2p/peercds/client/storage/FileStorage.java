@@ -106,6 +106,10 @@ public class FileStorage implements TorrentByteStorage {
 	public String getFileName(){
 		return this.target.getName();
 	}
+	
+	public File getTarget() {
+		return target;
+	}
 
 	@Override
 	public int read(ByteBuffer buffer, long offset) throws IOException {

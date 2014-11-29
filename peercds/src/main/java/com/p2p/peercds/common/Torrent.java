@@ -649,28 +649,30 @@ public class Torrent {
 				BYTE_ENCODING));
 		} else {
 			List<BEValue> fileInfo = new LinkedList<BEValue>();
-			for (File file : files) {
-				Map<String, BEValue> fileMap = new HashMap<String, BEValue>();
-				fileMap.put("length", new BEValue(file.length()));
-
-				LinkedList<BEValue> filePath = new LinkedList<BEValue>();
-				while (file != null) {
-					if (file.equals(parent)) {
-						break;
-					}
-
-					filePath.addFirst(new BEValue(file.getName()));
-					file = file.getParentFile();
-				}
-
-				fileMap.put("path", new BEValue(filePath));
-				fileInfo.add(new BEValue(fileMap));
-			}
+			List<File> updatedFilesList = new ArrayList<File>();
+//			for (File file : files) {
+//				Map<String, BEValue> fileMap = new HashMap<String, BEValue>();
+//				fileMap.put("length", new BEValue(file.length()));
+//
+//				LinkedList<BEValue> filePath = new LinkedList<BEValue>();
+//				while (file != null) {
+//					if (file.equals(parent)) {
+//						break;
+//					}
+//
+//					filePath.addFirst(new BEValue(file.getName()));
+//					file = file.getParentFile();
+//				}
+//
+//				fileMap.put("path", new BEValue(filePath));
+//				fileInfo.add(new BEValue(fileMap));
+//			}
+			updateFileInfo(files, parent, parent ,fileInfo ,updatedFilesList);
+			logger.info("Number of files in this multi-file torrent: "+updatedFilesList.size());
 			info.put("files", new BEValue(fileInfo));
-			BEValue piecesValue = new BEValue(Torrent.hashFiles(files),
+			BEValue piecesValue = new BEValue(Torrent.hashFiles(updatedFilesList),
 					BYTE_ENCODING);
 			info.put("pieces", piecesValue);
-			
 		}
 		
 		TreeMap<String, BEValue> sortInfoMap = new TreeMap<String, BEValue>();
@@ -730,6 +732,35 @@ public class Torrent {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		BEncoder.bencode(new BEValue(torrent), baos);
 		return new Torrent(baos.toByteArray(), true);
+	}
+	
+	private static void updateFileInfo(List<File> filesList , File parent , File actualParent, List<BEValue> fileInfo , List<File> files) throws UnsupportedEncodingException{
+	
+		for (File file : filesList) {
+			if(!file.isDirectory()){
+			Map<String, BEValue> fileMap = new HashMap<String, BEValue>();
+			fileMap.put("length", new BEValue(file.length()));
+
+			LinkedList<BEValue> filePath = new LinkedList<BEValue>();
+			File actual = file;
+			while (file != null) {
+				if (file.equals(actualParent)) {
+					break;
+				}
+
+				filePath.addFirst(new BEValue(file.getName()));
+				file = file.getParentFile();
+			}
+
+			fileMap.put("path", new BEValue(filePath));
+			fileInfo.add(new BEValue(fileMap));
+			logger.info("adding file: "+actual.getName()+" to the files list");
+			files.add(actual);
+		}else{
+			logger.info("Making recursive call");
+			updateFileInfo(Arrays.asList(file.listFiles(Constants.hiddenFilesFilter)), file , actualParent, fileInfo ,files);
+		}
+	}
 	}
 
 	/**
