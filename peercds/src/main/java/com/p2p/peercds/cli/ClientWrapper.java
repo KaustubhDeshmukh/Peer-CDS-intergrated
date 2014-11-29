@@ -90,16 +90,9 @@ public class ClientWrapper {
 		String torrentName = null;
 		
 		try{
-			File file = new File(fileName);
 			
-			if(file.isFile()){
-				torrentName = fileName.split("\\.(?=[^\\.]+$)")[0];
-				torrentName = torrentName +".torrent";
-			} else {
-				torrentName = fileName +".torrent";
-			}
 
-			TorrentMain.createTorrent(DEFAULT_OUTPUT_DIRECTORY, fileName, trackerURL, torrentName);
+			TorrentMain.createTorrent(DEFAULT_OUTPUT_DIRECTORY, fileName, trackerURL);
 			logger.info("createTorrent(): Torrent file created in directory: "+getDEFAULT_OUTPUT_DIRECTORY());
 
 		} catch (IllegalArgumentException e){
@@ -117,7 +110,16 @@ public class ClientWrapper {
 			return response;
 		}
 
-		logger.info("createTorrent(): Starting seeding of torrent: "+fileName);
+		File file = new File(DEFAULT_OUTPUT_DIRECTORY+fileName);
+		
+		if(file.isFile()){
+			torrentName = fileName.split("\\.(?=[^\\.]+$)")[0];
+			torrentName = torrentName +".torrent";
+		} else {
+			torrentName = fileName +".torrent";
+		}
+		
+		logger.info("createTorrent(): Starting seeding of torrent: "+torrentName);
 		this.downloadTorrent(torrentName);
 
 		response.setSuccess("true");

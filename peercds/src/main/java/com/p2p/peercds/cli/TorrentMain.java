@@ -185,7 +185,7 @@ public class TorrentMain {
 		}
 	}
 
-	public static String createTorrent(String directory, String fileName, String trackerURL, String torrentName) throws Exception{
+	public static String createTorrent(String directory, String fileName, String trackerURL) throws Exception{
 
 		String response = null;
 		OutputStream fos = null;
@@ -213,10 +213,15 @@ public class TorrentMain {
 
 			//String[] filesnames = null;
 			//filesnames = fileName.split("\\.(?=[^\\.]+$)");
+			if(source.isFile()){
+				fileName = fileName.split("\\.(?=[^\\.]+$)")[0];
+				fileName = fileName +".torrent";
+			} else {
+				fileName = fileName +".torrent";
+			}
 			
 			
-			
-			fos = new FileOutputStream(directory+torrentName);
+			fos = new FileOutputStream(directory+fileName);
 			
 			String creator = String.format("%s (ttorrent)",
 					System.getProperty("user.name"));
