@@ -167,6 +167,7 @@ public class TorrentMain {
 							announceList, creator);
 				} else {
 					torrent = Torrent.create(source, announceList, creator);
+					
 				}
 
 				torrent.save(fos);

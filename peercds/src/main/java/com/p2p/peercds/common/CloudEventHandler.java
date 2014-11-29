@@ -5,6 +5,8 @@ import static com.p2p.peercds.common.Constants.CLOUD_PIECE_FETCH_RATIO;
 import static com.p2p.peercds.common.Constants.KEY_BUCKET_FORMAT;
 import static com.p2p.peercds.common.Constants.PIECE_LENGTH;
 import static com.p2p.peercds.common.Constants.DIRECTORY_RANGE_FETCH_KEY_FORMAT;
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -187,10 +189,17 @@ outer:			for (Integer index : selectedPieceIndexList) {
 							+ fileOffset.getOffset()
 							+ " with length:" + fileOffset.getLength());
 					try {
+						String fileName = fileOffset.getFileName();
+						File parent = fileOffset.getFile().getTarget().getParentFile();
+						while(!parent.getName().equalsIgnoreCase(torrent.getName())){
+							fileName = parent.getName()+File.separator+fileName;
+							parent = parent.getParentFile();
+							}
+						logger.info("Multi file cloud key: "+fileName);
 						byte[] pieceData = CloudHelper
 								.downloadByteRangeFromDirectory(BUCKET_NAME,
 										torrent.getCloudKey(),
-										fileOffset.getFileName(),
+										fileName,
 										(int) fileOffset.getOffset(),
 										(int) fileOffset.getLength());
 						holder.put(pieceData);
