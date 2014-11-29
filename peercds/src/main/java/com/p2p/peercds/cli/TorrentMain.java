@@ -191,7 +191,7 @@ public class TorrentMain {
 		OutputStream fos = null;
 		try {
 
-			fos = new FileOutputStream(directory+fileName);
+			
 
 			//Process the announce URLs into URIs
 			List<URI> announceURIs = new ArrayList<URI>();		
@@ -211,6 +211,18 @@ public class TorrentMain {
 								source.getName());
 			}
 
+			//String[] filesnames = null;
+			//filesnames = fileName.split("\\.(?=[^\\.]+$)");
+			if(source.isFile()){
+				fileName = fileName.split("\\.(?=[^\\.]+$)")[0];
+				fileName = fileName +".torrent";
+			} else {
+				fileName = fileName +".torrent";
+			}
+			
+			
+			fos = new FileOutputStream(directory+fileName);
+			
 			String creator = String.format("%s (ttorrent)",
 					System.getProperty("user.name"));
 
