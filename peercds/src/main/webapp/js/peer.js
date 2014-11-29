@@ -68,7 +68,9 @@ $(function(){
 		
 		$("#resource-submit").click(function(){
 			var path=$("#resource-url").val();
-			peerApi.setDefaultDirectory(path);		
+			if(path!==""){
+				peerApi.setDefaultDirectory(path);
+			}
 		});
 	});
     
@@ -103,6 +105,22 @@ $(function(){
     
     
     $('input[type=file]#create_torrent').change(function(e){
+    	$in=$(this);    	
+    	var filename=$in.val().replace(/C:\\fakepath\\/i, '');
+    	$('#tracker_url_modal').modal('show');
+    	if(filename!==""){
+    		$('#url-submit').click(function(){
+        		var trackerurl=$('#tracker_url').val();
+    	       	 if(trackerurl!==""){
+    	       		console.log(trackerurl);
+    	       		 peerApi.createTorrent(filename,trackerurl);
+    	       	 }
+        	});
+    	}
+    });
+    
+    
+    $('input[type=file]#download_torrent').change(function(e){
     	$in=$(this);    	
     	var filename=$in.val().replace(/C:\\fakepath\\/i, '');
     	peerApi.downloadTorrent(filename);

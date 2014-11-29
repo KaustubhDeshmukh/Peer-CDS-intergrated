@@ -120,22 +120,51 @@ var peerApi={
 			});
 		},
 
-		creatTorrent:function(){
-			// filename : "name of the file"
-//			$.ajax({
-//			url:"http://localhost:8080/peercds/service/createtorrent",
-//			type:"POST",
-//			data:
-//			contentType: "application/json",
-//			success:function(res){
+		createTorrent:function(filename,trackerurl){
+			console.log(filename);
+			console.log(trackerurl);
+			var data=JSON.stringify({"filename":filename,"trackerurl":trackerurl});
 
-//			},
-//			error:function(){
+			$.ajax({
+			url:"http://localhost:8080/peercds/service/createtorrent",
+			type:"POST",
+			data:data,
+			contentType:"application/json",
+			success:function(res){
+				$('#common-alert-modal').find('#alert-modal-header').css('background-color','#46b8da');
+				$('#common-alert-modal').modal('show');
+				$('#common-alert-modal').on('shown.bs.modal',function(){
+					$('#common-alert-modal').find('#message').html(res.message);
+				});
+			},
+			error:function(){
 
-//			}
-//			});
+			}
+			});
 		},
 
+		
+		downloadTorrent:function(filename){
+			var data=JSON.stringify({"filename":filename});
+			console.log('filename reached here');
+			$.ajax({
+				url:"http://localhost:8080/peercds/service/downloadtorrent",
+				type:"POST",
+				data:data,
+				contentType: "application/json",
+				success:function(res){
+					if(res.message!=undefined){
+						alert(res.message);
+//						$('#common-alert-modal').show();
+						//pop message
+					}
+				},
+				error:function(){
+
+				}
+			});
+		},
+		
 		startTorrent:function(uuid){
 			console.log('started Torrent');
 			var data=JSON.stringify({"uuid":uuid});
@@ -205,24 +234,5 @@ var peerApi={
 			});
 		},
 
-		downloadTorrent:function(filename){
-			var data=JSON.stringify({"filename":filename});
-			console.log('filename reached here');
-			$.ajax({
-				url:"http://localhost:8080/peercds/service/downloadtorrent",
-				type:"POST",
-				data:data,
-				contentType: "application/json",
-				success:function(res){
-					if(res.message!=undefined){
-						alert(res.message);
-						$('#common-alert-modal').show();
-						//pop message
-					}
-				},
-				error:function(){
-
-				}
-			});
-		}
+		
 };

@@ -36,7 +36,7 @@
 			
 			<span class="btn btn-info btn-file" id="download-torrent">
 				<!-- Multi Torrent <input type="file" title="Search for a file to add" id="create_torrent" webkitdirectory="" directory=""> -->
-				<i class="fa fa-download"></i> Download Torrent <input type="file" title="Search for a file to add" id="create_torrent" value="">
+				<i class="fa fa-download"></i> Download Torrent <input type="file" title="Search for a file to add" id=download_torrent value="">
         	</span>
         	</div>
             <div class="navbar-header">
@@ -124,7 +124,7 @@
            <div class="col-md-9 col-sm-12 col-xs-12">
             <div class="panel panel-default" id="torrent-list"> 
                     <div class="panel-heading">
-                       Responsive Table Example
+                       Torrent List
                     </div>
             <div class="panel-body">
                 <div class="table-responsive" id="torrent_table">
@@ -156,7 +156,7 @@
                   <div class="col-md-9 col-sm-12 col-xs-12" id="torrent-info">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            Informtion 
+                            Information 
                         </div>
                         <div class="panel-body" id="torrent-info-body">
                             <ul class="nav nav-tabs">
@@ -200,6 +200,9 @@
          <!-- /. PAGE WRAPPER  -->
         </div>
         
+       
+       <!-- Set Default Path -->
+       
         <div class="modal fade" role="dialog" id="default-path-modal">
 			<div class="modal-dialog modal-sm">
 				<div class="modal-header" id="modal-header">
@@ -218,6 +221,29 @@
 			</div>
 		</div>
 		
+		
+		<!-- Set Default Path -->
+       
+        <div class="modal fade" role="dialog" id="tracker_url_modal">
+			<div class="modal-dialog modal-sm">
+				<div class="modal-header" id="modal-header">
+					Default Path
+				</div>
+				<div class="modal-content">
+					<div class="modal-body">
+						<b>Enter Tracker Url</b>
+						<input type="text" class="form-control" placeholder="" id="tracker_url" autofocus="">
+					</div>
+				<div class="modal-footer" id="modal-submit">
+					<button class="btn btn-success" id="url-submit" data-dismiss="modal">Submit</button>
+					<button class="btn btn-danger"  data-dismiss="modal">Cancel</button>
+				</div>
+				</div>
+			</div>
+		</div>
+		
+		
+		<!-- Common Alert Modal -->
 		<div class="modal fade" role="dialog" id="common-alert-modal">
 			<div class="modal-dialog modal-sm">
 				<div class="modal-header" id="alert-modal-header">
