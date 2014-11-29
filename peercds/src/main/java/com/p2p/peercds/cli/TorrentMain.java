@@ -185,13 +185,13 @@ public class TorrentMain {
 		}
 	}
 
-	public static String createTorrent(String directory, String fileName, String trackerURL) throws Exception{
+	public static String createTorrent(String directory, String fileName, String trackerURL, String torrentName) throws Exception{
 
 		String response = null;
 		OutputStream fos = null;
 		try {
 
-			fos = new FileOutputStream(directory+fileName);
+			
 
 			//Process the announce URLs into URIs
 			List<URI> announceURIs = new ArrayList<URI>();		
@@ -211,6 +211,13 @@ public class TorrentMain {
 								source.getName());
 			}
 
+			//String[] filesnames = null;
+			//filesnames = fileName.split("\\.(?=[^\\.]+$)");
+			
+			
+			
+			fos = new FileOutputStream(directory+torrentName);
+			
 			String creator = String.format("%s (ttorrent)",
 					System.getProperty("user.name"));
 

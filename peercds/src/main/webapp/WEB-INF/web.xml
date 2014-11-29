@@ -5,16 +5,6 @@
 
 	<display-name>Archetype Created Web Application</display-name>
 
-	<servlet>
-		<servlet-name>log4j-init</servlet-name>
-		<servlet-class>com.rest.service.Log4jInit</servlet-class>
-		<init-param>
-			<param-name>log4j-init-file</param-name>
-			<param-value>WEB-INF/resources/log4j.properties</param-value>
-		</init-param>
-		<load-on-startup>1</load-on-startup>
-	</servlet>
-
 	<filter>
 		<filter-name>p2p-filter</filter-name>
 		<filter-class>com.sun.jersey.spi.container.servlet.ServletContainer</filter-class>

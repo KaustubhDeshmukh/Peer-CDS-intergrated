@@ -87,9 +87,19 @@ public class ClientWrapper {
 
 		CreateTorrentResponseMapper response = new CreateTorrentResponseMapper();
 
+		String torrentName = null;
+		
 		try{
+			File file = new File(fileName);
+			
+			if(file.isFile()){
+				torrentName = fileName.split("\\.(?=[^\\.]+$)")[0];
+				torrentName = torrentName +".torrent";
+			} else {
+				torrentName = fileName +".torrent";
+			}
 
-			TorrentMain.createTorrent(DEFAULT_OUTPUT_DIRECTORY, fileName, trackerURL);
+			TorrentMain.createTorrent(DEFAULT_OUTPUT_DIRECTORY, fileName, trackerURL, torrentName);
 			logger.info("createTorrent(): Torrent file created in directory: "+getDEFAULT_OUTPUT_DIRECTORY());
 
 		} catch (IllegalArgumentException e){
@@ -108,7 +118,7 @@ public class ClientWrapper {
 		}
 
 		logger.info("createTorrent(): Starting seeding of torrent: "+fileName);
-		this.downloadTorrent(fileName);
+		this.downloadTorrent(torrentName);
 
 		response.setSuccess("true");
 		response.setMessage("Torrent created successfully");
@@ -201,7 +211,7 @@ public class ClientWrapper {
 
 		Iterator<Entry<String, ClientMetadata>> iterator = clientMap.entrySet().iterator();
 
-		logger.info("getTorrents(): Iterating client map with "+clientMap.size()+ " entries");
+//		logger.info("getTorrents(): Iterating client map with "+clientMap.size()+ " entries");
 		while(iterator.hasNext()){
 
 			Entry<String, ClientMetadata> clientEntry = iterator.next();
@@ -213,7 +223,7 @@ public class ClientWrapper {
 				
 				Client client = clientMetadata.getClient();
 				
-				logger.info("getTorrents(): Retrieving metadata for torrent: "+clientMetadata.getTorrentName());
+//				logger.info("getTorrents(): Retrieving metadata for torrent: "+clientMetadata.getTorrentName());
 				MonitorResponseMapper metadata = new MonitorResponseMapper();
 
 				// calculate download and upload speed
@@ -265,7 +275,7 @@ public class ClientWrapper {
 					metadata.setStatus("Downloading");
 				} else {
 
-					metadata.setStatus("Uploading");
+					metadata.setStatus("Seeding");
 				}
 
 				metadata.setUuid(clientEntry.getKey());
@@ -277,7 +287,7 @@ public class ClientWrapper {
 			}
 			else {
 				
-				logger.info("getTorrents(): Skipping retrieval of metadata for torrent: "+clientMetadata.getTorrentName());
+//				logger.info("getTorrents(): Skipping retrieval of metadata for torrent: "+clientMetadata.getTorrentName());
 				MonitorResponseMapper metadata = new MonitorResponseMapper();
 				metadata.setError(clientMetadata.isError());
 				metadata.setPaused(clientMetadata.isPaused());

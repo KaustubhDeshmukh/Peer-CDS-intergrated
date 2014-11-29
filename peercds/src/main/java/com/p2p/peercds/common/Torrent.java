@@ -407,6 +407,8 @@ public class Torrent {
 	 */
 	public void save(OutputStream output) throws IOException {
 		output.write(this.getEncoded());
+		logger.info("Torrent.Save(): Flushing file");
+		output.flush();
 	}
 
 	public static byte[] hash(byte[] data) {
