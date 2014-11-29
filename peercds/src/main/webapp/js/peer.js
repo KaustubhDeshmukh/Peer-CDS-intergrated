@@ -1,6 +1,5 @@
 	function timer(){
 		var status=myobject.status;
-		console.log('calling all');
 		peerApi.getTorrents(status);
 	}
 
@@ -14,9 +13,8 @@
 			myobject.currentFile=res;
 		},
 		currentFile:"",
-		selectedFile:""
+		currentTorrentState:''
 	};
-	console.log('selected is'+myobject.selectedFile);
 	
 	$('#torrent-info').hide();
 	$('#page-wrapper').click(function(e){
@@ -25,6 +23,7 @@
 		myobject.selectedFile="";
 		e.stopPropagation();
 	});
+	
 	$('body').click(function(e){
 		$('#torrent-info').hide();
 		$('#torrent-rows > tr').removeClass('info');
@@ -36,10 +35,16 @@ $(function(){
 	timer();
 	setInterval(timer, 3000);
 	$("#torrent_table").on('click','#torrent-rows > tr',function(e){
+		console.log(myobject.currentFile[0].uuid);
+		var status=myobject.currentFile[0].status;
+		
+		// Cases to activate and deactivate button controls for each torrent
+		
+		
 		$('#torrent-info').show();
 		var files=myobject.currentFile;
 		myobject.selectedFile=$(this).attr('id');
-		console.log(myobject.selectedFile);
+		peerApi.uuid=files[0].uuid;		
 		
 		$('#torrent-rows > tr').removeClass('info');
 		var active_row=$(this).attr('id');
@@ -47,9 +52,7 @@ $(function(){
 			$('#'+active_row).removeClass('info');
 		}
 		$('#'+active_row).addClass('info');
-		
-		console.log(files);
-		
+
 		var seeds=files[active_row].seeds;
 		var peers=files[active_row].peers;
 		var status=files[active_row].status;
@@ -64,28 +67,10 @@ $(function(){
 		$('#default-path-modal').modal('show');
 		
 		$("#resource-submit").click(function(){
-//			var path=$("#resource-url").val();
-//			var data=JSON.stringify({"defaultDirectory":path});
-//			$.ajax({
-//				url:"http://192.168.200.20:8080/ttorrent/service/setDefaultDirectory",
-//				contentType: "application/json; charset=utf-8",
-//    			dataType: "json",
-//				type:"POST",
-//				data:data,
-//				success:function(res){
-//					console.log(res);
-//				},
-//				error:function(){
-//					
-//				}
-//			});		
+			var path=$("#resource-url").val();
+			peerApi.setDefaultDirectory(path);		
 		});
-		
-		
 	});
-
-	
-	  
     
     $('li').click(function(){
   		$('#main-menu li').each(function(){
@@ -116,4 +101,33 @@ $(function(){
     	timer();
     });
     
+    
+    $('input[type=file]#create_torrent').change(function(e){
+    	$in=$(this);    	
+    	var filename=$in.val().replace(/C:\\fakepath\\/i, '');
+    	peerApi.downloadTorrent(filename);
+    });
+    
+    $('#Resume').click(function(){
+    	if(myobject.currentFile!==""){
+    		console.log('file is selected');
+    		peerApi.startTorrent(peerApi.uuid);
+    	}
+    });
+    
+    
+    $('#Pause').click(function(){
+    	if(myobject.currentFile!==""){
+    		console.log('file is selected');
+    		peerApi.pauseTorrent(peerApi.uuid);
+    	}
+    });
+    
+    $('#Delete').click(function(){
+    	if(myobject.currentFile!==""){
+    		console.log('file is selected');
+    		peerApi.deleteTorrent(peerApi.uuid);
+    	}
+    });
+        
 });

@@ -36,7 +36,7 @@
 			
 			<span class="btn btn-info btn-file" id="download-torrent">
 				<!-- Multi Torrent <input type="file" title="Search for a file to add" id="create_torrent" webkitdirectory="" directory=""> -->
-				<i class="fa fa-download"></i> Download Torrent <input type="file" title="Search for a file to add" id="create_torrent">
+				<i class="fa fa-download"></i> Download Torrent <input type="file" title="Search for a file to add" id="create_torrent" value="">
         	</span>
         	</div>
             <div class="navbar-header">
@@ -79,7 +79,7 @@
                      	<h2>Application Dashboard</h2>   
                     </div>
                 
-             <div class="col-md-3 col-sm-6 col-xs-4">           
+             <div class="col-md-3 col-sm-6 col-xs-4" id="Resume">           
 				<div class="panel panel-back noti-box">
 	                <span class="icon-box bg-color-green set-icon">
 	                    <i class="fa fa-play"></i>
@@ -93,7 +93,7 @@
              
              
              
-             <div class="col-md-3 col-sm-6 col-xs-4">           
+             <div class="col-md-3 col-sm-6 col-xs-4" id="Pause">           
 				<div class="panel panel-back noti-box">
 	                <span class="icon-box bg-color-brown set-icon">
 	                    <i class="fa fa-pause"></i>
@@ -105,7 +105,7 @@
 	             </div>
 		     </div>
 		     
-            <div class="col-md-3 col-sm-6 col-xs-4">           
+            <div class="col-md-3 col-sm-6 col-xs-4" id="Delete">           
 				<div class="panel panel-back noti-box">
 	                <span class="icon-box bg-color-red set-icon">
 	                    <i class="fa fa-trash-o"></i>
@@ -201,22 +201,38 @@
         </div>
         
         <div class="modal fade" role="dialog" id="default-path-modal">
-		<div class="modal-dialog modal-sm">
-			<div class="modal-header" id="modal-header">
-				Default Path
-			</div>
-			<div class="modal-content">
-				<div class="modal-body">
-					<b>Paste your default path</b>
-					<input type="text" class="form-control" placeholder="" id="resource-url" autofocus="">
+			<div class="modal-dialog modal-sm">
+				<div class="modal-header" id="modal-header">
+					Default Path
 				</div>
-			<div class="modal-footer" id="modal-submit">
-				<button class="btn btn-success" id="resource-submit" data-dismiss="modal">Submit</button>
-				<button class="btn btn-danger"  data-dismiss="modal">Cancel</button>
-			</div>
+				<div class="modal-content">
+					<div class="modal-body">
+						<b>Paste your default path</b>
+						<input type="text" class="form-control" placeholder="" id="resource-url" autofocus="">
+					</div>
+				<div class="modal-footer" id="modal-submit">
+					<button class="btn btn-success" id="resource-submit" data-dismiss="modal">Submit</button>
+					<button class="btn btn-danger"  data-dismiss="modal">Cancel</button>
+				</div>
+				</div>
 			</div>
 		</div>
-	</div>
+		
+		<div class="modal fade" role="dialog" id="common-alert-modal">
+			<div class="modal-dialog modal-sm">
+				<div class="modal-header" id="alert-modal-header">
+					<b>Notification</b>
+				</div>
+				<div class="modal-content">
+					<div class="modal-body">
+						<div id="message"></div>
+					</div>
+				<div class="modal-footer" id="modal-submit">
+					<button class="btn btn-success"  data-dismiss="modal">Ok</button>
+				</div>
+				</div>
+			</div>
+		</div>
     <script src="../js/api.js"></script>
 	<script src="../js/peer.js"></script>
 </body>

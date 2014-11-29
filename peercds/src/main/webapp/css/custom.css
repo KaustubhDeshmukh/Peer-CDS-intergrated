@@ -64,7 +64,7 @@ p {
     =============================================*/
 .panel-back {
     /* background-color:#F8F8F8; */
-    background-color:#D1D0CE;
+    /* background-color:#D1D0CE; */
     padding:5px;
 
 }
@@ -527,3 +527,9 @@ td{
 	margin:10px;
 }
 
+
+
+
+#Pause{
+	filter: grayscale(100%);
+}
