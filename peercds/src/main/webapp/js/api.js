@@ -1,151 +1,228 @@
 var peerApi={
-	//url:"http://localhost:8080/peercds/service/gettorrents",
-	base_url:"http://192.168.200.22:8080",
-	getTorrents:function(status){
-		$.ajax({
-			url:this.base_url+"/peercds/service/gettorrents",
-			type:"GET",
-			success:function(res){
-				myobject.getCurrentTorrentInfo(res);
-				$('#torrent-rows').empty();
-				for(var i=0;i<res.length;i++){
-					if(status==res[i].status || status=="all"){
-					console.log(res[i]);
-					var table='<tr class="file" id='+i+'>';
-					table=table+'<td class="fid">'+i+'</td>';
-					table=table+'<td class="file_name">'+res[i].fileName+'</td>';
-					table=table+'<td class="status">'+res[i].status+'</td>';
-					table=table+'<td class="prog">'+ '<progress value='+'"'+res[i].progress+'"'+ 'max="100"></progress>'+'</td>';
-					table=table+'<td class="eta">'+res[i].eta+'</td>';
-					table=table+'<td class="size">'+res[i].size+'</td>';
-					table=table+'</tr>';
-					$('#torrent-rows').append(table);
-					//console.log(myobject.selectedFile);
-					if(myobject.selectedFile!=""){
-						$('#torrent-rows tr').eq(myobject.selectedFile).addClass('info');
+		//url:"http://localhost:8080/peercds/service/gettorrents",
+		
+		uuid:'',
+		
+		getTorrents:function(status){
+			$.ajax({
+				url:"http://localhost:8080/peercds/service/gettorrents",
+				type:"GET",
+				success:function(res){
+					myobject.getCurrentTorrentInfo(res);
+					$('#torrent-rows').empty();
+					for(var i=0;i<res.length;i++){
+						console.log(res[i]);
+						if(res[i].error==true){
+							$('col-md-3 col-sm-6 col-xs-4').hide();
+							myobject.currentTorrentState="error";
+							
+							$('#Pause > .panel-back').css('background-color','#D1D0CE');
+							$('#Pause').css('pointer-events','none');
+							
+							console.log(myobject.currentTorrentState);
+							var table='<tr class="file" id='+i+'>';
+							table=table+'<td class="fid">'+i+'</td>';
+							table=table+'<td class="file_name">'+res[i].fileName+'</td>';
+							table=table+'<td class="status">Error</td>';
+							table=table+'<td class="prog"></td>';
+							table=table+'<td class="eta"></td>';
+							table=table+'<td class="size"></td>';
+							$('#torrent-rows').append(table);
+							if(myobject.selectedFile!=""){
+								$('#torrent-rows tr').eq(myobject.selectedFile).addClass('info');
+							}
+
+						} else if(res[i].paused==true){
+							myobject.currentTorrentState="paused";
+							console.log(myobject.currentTorrentState);
+							$('#Pause > .panel-back').css('background-color','#D1D0CE');
+							$('#Pause').css('pointer-events','none');
+							console.log(res[i].size);
+							var table='<tr class="file" id='+i+'>';
+							table=table+'<td class="fid">'+i+'</td>';
+							table=table+'<td class="file_name">'+res[i].fileName+'</td>';
+							table=table+'<td class="status">Paused</td>';
+							table=table+'<td class="prog"></td>';
+							table=table+'<td class="eta"></td>';
+							table=table+'<td class="size"></td>';
+							table=table+'</tr>';
+							$('#torrent-rows').append(table);
+							if(myobject.selectedFile!=""){
+								$('#torrent-rows tr').eq(myobject.selectedFile).addClass('info');
+							}
+
+						}else{
+
+							if(status==res[i].status || status=="all"){
+								$('#Resume').css('pointer-events','');
+								$('#Pause').css('pointer-events','');
+								$('#Pause > .panel-back').css('background-color','');
+								$('#Delete').css('pointer-events','');
+								
+								var table='<tr class="file" id='+i+'>';
+								table=table+'<td class="fid">'+i+'</td>';
+								table=table+'<td class="file_name">'+res[i].fileName+'</td>';
+								table=table+'<td class="status">'+res[i].status+'</td>';
+								table=table+'<td class="prog">'+ '<progress value='+'"'+res[i].progress+'"'+ 'max="100"></progress>'+'</td>';
+								table=table+'<td class="eta">'+res[i].eta+'</td>';
+								table=table+'<td class="size">'+res[i].size+'</td>';
+								table=table+'</tr>';
+								$('#torrent-rows').append(table);
+								//console.log(myobject.selectedFile);
+								if(myobject.selectedFile!=""){
+									$('#torrent-rows tr').eq(myobject.selectedFile).addClass('info');
+								}
+							}
+						}
 					}
-				  }
+				},
+				error:function(){
+
 				}
-					
-			},
-			error:function(){
-				
-			}
-		});
-	},
-	
-	setDefaultDirectory:function(){
-		var path=$("#resource-url").val();
-		var data=JSON.stringify({"defaultDirectory":path});
-		$.ajax({
-			url:this.base_url+"/ttorrent/service/setDefaultDirectory",
-			contentType: "application/json; charset=utf-8",
-			dataType: "json",
+			});
+		},
+
+		setDefaultDirectory:function(path){
+			var data=JSON.stringify({"defaultDirectory":path});
+			console.log(data);
+			$.ajax({
+				url:"http://localhost:8080/peercds/service/defaultdirectory",
+				contentType: "application/json; charset=utf-8",
+				dataType: "json",
+				type:"POST",
+				data:data,
+				success:function(res){
+					console.log('success');
+					if(res.message!=undefined){
+						alert(res.message);
+						//pop message
+					}
+				},
+				error:function(){
+					alert("error");
+				}
+			});
+
+		},
+
+		getDefaultDirectory:function(){
+			$.ajax({
+
+				url:"http://localhost:8080/peercds/service/defaultdirectory",
+				type:"GET",
+				contentType: "application/json",
+				success:function(res){
+					$('#resource-url').val(res.defaultDirectory);
+				},
+				error:function(){
+
+				}
+			});
+		},
+
+		creatTorrent:function(){
+			// filename : "name of the file"
+//			$.ajax({
+//			url:"http://localhost:8080/peercds/service/createtorrent",
+//			type:"POST",
+//			data:
+//			contentType: "application/json",
+//			success:function(res){
+
+//			},
+//			error:function(){
+
+//			}
+//			});
+		},
+
+		startTorrent:function(uuid){
+			console.log('started Torrent');
+			var data=JSON.stringify({"uuid":uuid});
+			$.ajax({
+				url:"http://localhost:8080/peercds/service/starttorrent",
+				type:"POST",
+				data:data,
+				contentType: "application/json",
+				success:function(res){
+					console.log(res.message);
+					if(res.message!=undefined){
+						$('#common-alert-modal').find('#alert-modal-header').css('background-color','#46b8da');
+						$('#common-alert-modal').modal('show');
+						$('#common-alert-modal').on('shown.bs.modal',function(){
+							$('#common-alert-modal').find('#message').html(res.message);
+						});
+					}
+				},
+				error:function(){
+
+				}
+			});
+		},
+
+		pauseTorrent:function(uuid){
+			var data=JSON.stringify({"uuid":uuid});
+			$.ajax({
+			url:"http://localhost:8080/peercds/service/pausetorrent",
 			type:"POST",
 			data:data,
-			success:function(res){
-				console.log('success');
-			},
-			error:function(){
-				alert("error");
-			}
-		});
-		
-	},
-	
-	getDefaultDirectory:function(){
-		$.ajax({
-			url:this.base_url+"/peercds/service/defaultdirectory",
-			type:"GET",
 			contentType: "application/json",
 			success:function(res){
-				console.log(res);
-				$('#resource-url').html();
+				console.log(res.message);
+				if(res.message!=undefined){
+					//pop message
+					$('#common-alert-modal').find('#alert-modal-header').css('background-color','#d43f3a');
+					$('#common-alert-modal').modal('show');
+					$('#common-alert-modal').on('shown.bs.modal',function(){
+						$('#common-alert-modal').find('#message').html(res.message);
+					});
+				}
 			},
 			error:function(){
-				
+
 			}
-		});
-	},
-	
-	creatTorrent:function(){
-		// filename : "name of the file"
-		$.ajax({
-			url:this.base_url+"/peercds/service/createtorrent",
-//			type:"GET",
-//			contentType: "application/json",
-//			success:function(res){
-//				console.log(res);
-//				$('#resource-url').html();
-//			},
-//			error:function(){
-//				
-//			}
-		});
-	},
-	
-	startTorrent:function(){
-		// uuid :"value"
-		$.ajax({
-			url:this.base_url+"/peercds/service/defaultdirectory",
-			type:"GET",
-			contentType: "application/json",
-			success:function(res){
-				console.log(res);
-				$('#resource-url').html();
-			},
-			error:function(){
-				
-			}
-		});
-	},
-	
-	pauseTorrent:function(){
-		// uuid :"value"
-//		$.ajax({
-//			url:this.base_url+"/peercds/service/pausetorrent",
-//			type:"POST",
-//			data:{"uuid":}
-//			contentType: "application/json",
-//			success:function(res){
-//				console.log(res);
-//				$('#resource-url').html();
-//			},
-//			error:function(){
-//				
-//			}
-//		});
-	},
-	
-	deleteTorrent:function(){
-		// uuid :"value"
-		$.ajax({
-			url:this.base_url+"/peercds/service/deletetorrent",
-//			type:"GET",
-//			contentType: "application/json",
-//			success:function(res){
-//				console.log(res);
-//				$('#resource-url').html();
-//			},
-//			error:function(){
-//				
-//			}
-		});
-	},
-	
-	downloadTorrent:function(){
-		// filename : "name of the file"
-		$.ajax({
-			url:this.base_url+"/peercds/service/downloadtorrent",
-			type:"GET",
-			contentType: "application/json",
-			success:function(res){
-				console.log(res);
-				$('#resource-url').html();
-			},
-			error:function(){
-				
-			}
-		});
-	}
+			});
+		},
+
+		deleteTorrent:function(uuid){
+			console.log('reached delete');
+			var data=JSON.stringify({"uuid":uuid});
+			$.ajax({
+				url:"http://localhost:8080/peercds/service/deletetorrent",
+				type:"POST",
+				data:data,
+				contentType: "application/json",
+				success:function(res){
+					console.log(res);
+					if(res.message!=undefined){
+						alert(res.message);
+						//pop message
+					}
+				},
+				error:function(){
+
+				}
+			});
+		},
+
+		downloadTorrent:function(filename){
+			var data=JSON.stringify({"filename":filename});
+			console.log('filename reached here');
+			$.ajax({
+				url:"http://localhost:8080/peercds/service/downloadtorrent",
+				type:"POST",
+				data:data,
+				contentType: "application/json",
+				success:function(res){
+					if(res.message!=undefined){
+						alert(res.message);
+						$('#common-alert-modal').show();
+						//pop message
+					}
+				},
+				error:function(){
+
+				}
+			});
+		}
 };

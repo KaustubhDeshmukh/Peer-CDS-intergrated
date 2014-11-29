@@ -207,7 +207,8 @@ public class ClientWrapper {
 			Entry<String, ClientMetadata> clientEntry = iterator.next();
 			ClientMetadata clientMetadata = clientEntry.getValue();
 
-			if(!clientMetadata.isPaused() || !clientMetadata.isError()){
+
+			if(!clientMetadata.isPaused() && !clientMetadata.isError()){
 				
 				
 				Client client = clientMetadata.getClient();
