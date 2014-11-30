@@ -229,7 +229,7 @@ public class TorrentMain {
 
 			Torrent torrent = null;
 			if (source.isDirectory()) {
-				File[] files = source.listFiles();
+				File[] files = source.listFiles(Constants.hiddenFilesFilter);
 				Arrays.sort(files);
 				torrent = Torrent.create(source, Arrays.asList(files),
 						announceList, creator);
