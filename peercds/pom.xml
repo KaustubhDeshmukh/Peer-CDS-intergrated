@@ -126,6 +126,12 @@
 			<artifactId>guava</artifactId>
 			<version>18.0</version>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-coyote</artifactId>
+			<version>7.0.56</version>
+			<scope>compile</scope>
+		</dependency>
 
 	</dependencies>
 

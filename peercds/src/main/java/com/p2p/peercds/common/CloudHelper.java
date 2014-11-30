@@ -4,12 +4,14 @@ import static com.p2p.peercds.common.Constants.BUCKET_NAME;
 import static com.p2p.peercds.common.Constants.DIRECTORY_RANGE_FETCH_KEY_FORMAT;
 import static com.p2p.peercds.common.Constants.PIECE_LENGTH;
 import static com.p2p.peercds.common.Constants.hiddenFilesFilter;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.tomcat.util.http.fileupload.FileUtils;
@@ -17,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.event.ProgressListener;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
@@ -29,7 +32,9 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.MultipleFileDownload;
 import com.amazonaws.services.s3.transfer.MultipleFileUpload;
+import com.amazonaws.services.s3.transfer.ObjectMetadataProvider;
 import com.amazonaws.services.s3.transfer.TransferManager;
+import com.amazonaws.services.s3.transfer.Upload;
 import com.google.common.base.Strings;
 
 public class CloudHelper {
@@ -45,7 +50,35 @@ public class CloudHelper {
 
 		s3 = new AmazonS3Client(new DefaultAWSCredentialsProviderChain());
 		s3.setRegion(Region.getRegion(Regions.US_EAST_1));
-		manager = new TransferManager(s3);
+		manager = new TransferManager(s3){
+					
+			@Override
+			public MultipleFileUpload uploadDirectory(String bucketName, String virtualDirectoryKeyPrefix, File directory, boolean includeSubdirectories, ObjectMetadataProvider metadataProvider) {
+		        if ( directory == null || !directory.exists() || !directory.isDirectory() ) {
+		            throw new IllegalArgumentException("Must provide a directory to upload");
+		        }
+
+		        List<File> files = new LinkedList<File>();
+		        listFiles(directory, files, includeSubdirectories);
+
+		        return uploadFileList(bucketName, virtualDirectoryKeyPrefix, directory, files, metadataProvider);
+		    }
+			
+			public void listFiles(File dir, List<File> results, boolean includeSubDirectories) {
+		        File[] found = dir.listFiles(hiddenFilesFilter);
+		        if ( found != null ) {
+		            for ( File f : found ) {
+		                if (f.isDirectory()) {
+		                    if (includeSubDirectories) {
+		                        listFiles(f, results, includeSubDirectories);
+		                    }
+		                } else {
+		                    results.add(f);
+		                }
+		            }
+		        }
+		    }
+		};
 		if (!s3.doesBucketExist(BUCKET_NAME)) {
 			logger.info("Creating bucket " + BUCKET_NAME);
 			s3.createBucket(BUCKET_NAME);
@@ -61,7 +94,7 @@ public class CloudHelper {
 		logger.info("===========================================\n");
 
 		File file = new File("/Users/kaustubh/Desktop/mfile");
-		uploadTorrent("peer-cds", "mfile1", file);
+		uploadTorrent("peer-cds", "mfile1", file,null);
 		// downloadPiece("peer-cds", "mfile1/abc.pdf" , 10 , 11, false);
 		downloadCompleteDirectory(BUCKET_NAME, "mfile");
 		//downloadByteRangeFromDirectory(BUCKET_NAME, "mfile", "abc.pdf", 0, 117143);
@@ -69,7 +102,7 @@ public class CloudHelper {
 	}
 
 	public static boolean uploadTorrent(String bucketName, String key,
-			File sourceFile) throws S3FetchException {
+			File sourceFile, ProgressListener listener) throws S3FetchException {
 
 		if (Strings.isNullOrEmpty(bucketName) || Strings.isNullOrEmpty(key)
 				|| sourceFile == null || !sourceFile.exists())
@@ -79,18 +112,18 @@ public class CloudHelper {
 			bucketName = bucketName.trim();
 			key = key.trim();
 		}
-
+		
 		if (keyExistsInBucket(bucketName, key, null) == 0) {
-
+			String newKey = key;
 			if (sourceFile.isDirectory()) {
-
+				newKey = newKey+File.pathSeparator+sourceFile.getName();
 				logger.info("Uploading a directory: " + sourceFile.getName()
 						+ " to cloud.");
-				File[] listFiles = sourceFile.listFiles(hiddenFilesFilter);
-				MultipleFileUpload uploadDirectory = manager.uploadFileList(
-						bucketName, key, sourceFile, Arrays.asList(listFiles));
+
+				MultipleFileUpload uploadDirectory = manager.uploadDirectory(bucketName, key, sourceFile, true, null);
 				try {
-					uploadDirectory.waitForCompletion();
+					if(listener!= null)
+					uploadDirectory.addProgressListener(listener);
 				} catch (Exception e) {
 					logger.error("Exception while uploading a directory: "
 							+ sourceFile.getName() + " to the cloud", e);
@@ -104,17 +137,31 @@ public class CloudHelper {
 				return true;
 
 			} else {
-				logger.info("Uploading a single file: " + sourceFile.getName()
-						+ " to cloud.");
-				PutObjectResult result = s3.putObject(new PutObjectRequest(
-						bucketName, key, sourceFile));
-				return true;
+
+				return uploadFileToCloud(bucketName, newKey, sourceFile , listener);
 			}
 		} else {
 
 			logger.info("File already exists in the cloud.. skipping upload.");
 			return false;
 		}
+	}
+	
+	private static boolean uploadFileToCloud(String bucketName , String key , File sourceFile , ProgressListener listener){
+		logger.info("Uploading a single file: " + sourceFile.getName()
+				+ " to cloud.");
+		try{
+		   PutObjectRequest putObjectRequest = new PutObjectRequest(
+				bucketName, key, sourceFile);
+		   Upload upload = manager.upload(putObjectRequest);
+		   if(listener!= null)
+			   upload.addProgressListener(listener);
+		}catch(Exception e){
+			logger.error("Exception while uploading file "+sourceFile.getName()+"to the torrent with key: "+key);
+			return false;
+		}
+		
+		return true;
 	}
 
 	private static int keyExistsInBucket(String bucketName, String keyPrefix,
