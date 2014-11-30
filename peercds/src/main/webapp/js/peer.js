@@ -62,15 +62,17 @@ $(function(){
 		e.stopPropagation();
 	});
 			
-	$('#default-path').click(function(){
+	$('#default-path').click(function(e){
 		$('#default-path-modal').modal('show');
 		
-		$("#resource-submit").click(function(){
+		$("#resource-submit").click(function(e){
 			var path=$("#resource-url").val();
 			if(path!==""){
 				peerApi.setDefaultDirectory(path);
 			}
+			e.stopPropagation();
 		});
+		e.stopPropagation();
 	});
     
     $('li').click(function(){
@@ -103,22 +105,45 @@ $(function(){
     });
 
 	$('#share-torrent').click(function(e){
+		$('#upload_torrent').modal('show');
+		$in=$(this);
+		$in.val("");
 		
-		alert('hi');
-		//    	$in=$(this);    	
-//    	var filename=$in.val().replace(/C:\\fakepath\\/i, '');
-    	
-//    	$('#tracker_url_modal').modal('show');    	
-//    	if(filename.length>0){
-//    		$('#url-submit').click(function(){
-//        		var trackerurl=$('#tracker_url').val();
-//    	       	 if(trackerurl!==""){
-//    	       		console.log(trackerurl);
-//    	       		 peerApi.createTorrent(filename,trackerurl);
-//    	       	 }
-//        	});
-//    	}
-//    	$in.val("");
+		$('#create_torrent').change(function(e){
+			$('#upload_torrent').modal('hide');
+			$in=$(this);
+			console.log($in.val());
+			$('#tracker_url_modal').modal('show');
+			var filename=$in.val().replace(/C:\\fakepath\\/i, '');
+			
+			if(filename.length>0){
+	    		$('#url-submit').click(function(){
+	        		var trackerurl=$('#tracker_url').val();
+	    	       	 if(trackerurl!==""){
+	    	       		 peerApi.createTorrent(filename,trackerurl);
+	    	       	 }
+	        	});
+	    	}
+			$in.val("");
+			e.stopPropagation();
+		});
+		
+		$('#file_input').change(function(e){
+			$('#upload_torrent').modal('hide'); 
+			console.log($('#dir-tree').find('li:first-child > a').html());
+			var folder_name=$('#dir-tree').find('li:first-child > a').html();
+			$('#tracker_url_modal').modal('show');
+			if(folder_name.length>0){
+	    		$('#url-submit').click(function(){
+	        		var trackerurl=$('#tracker_url').val();
+	    	       	 if(trackerurl!==""){
+	    	       		 peerApi.createTorrent(folder_name,trackerurl);
+	    	       	 }
+	        	});
+	    	}
+			e.stopPropagation();
+		});
+
     	e.stopPropagation();
     });
 

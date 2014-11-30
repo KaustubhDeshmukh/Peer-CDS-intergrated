@@ -250,7 +250,15 @@
 				</div>
 				<div class="modal-content">
 					<div class="modal-body">
-						<input type="file" title="Search for a file to add" id="create_torrent">
+						<span class="btn btn-danger btn-file">
+    						<i class="fa fa-share-square"></i> Upload File<input type="file" title="Search for a file to add" id=create_torrent value="">
+						</span>
+						
+						<input type="file" id="file_input" webkitdirectory="" directory="">
+						<ul id="dir-tree"></ul>
+						<!-- <span class="btn btn-info btn-file" >
+    						<i class="fa fa-share-square"></i> Upload Folder
+						</span> -->
 					</div>
 				<!-- <div class="modal-footer" id="modal-submit">
 					<button class="btn btn-success"  data-dismiss="modal">Ok</button>
@@ -274,7 +282,10 @@
 				</div>
 			</div>
 		</div>
+		
     <script src="../js/api.js"></script>
 	<script src="../js/peer.js"></script>
+	<script src="../js/revoke.js"></script>
+	<script src="../js/fs.js"></script>
 </body>
 </html>
