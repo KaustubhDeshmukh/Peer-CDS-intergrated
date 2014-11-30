@@ -117,10 +117,7 @@ public class CloudHelper {
 				newKey = newKey+File.pathSeparator+sourceFile.getName();
 				logger.info("Uploading a directory: " + sourceFile.getName()
 						+ " to cloud.");
-				File[] listFiles = sourceFile.listFiles(hiddenFilesFilter);
-				
-//				MultipleFileUpload uploadDirectory = manager.uploadFileList(
-//						bucketName, key, sourceFile, Arrays.asList(listFiles));
+
 				MultipleFileUpload uploadDirectory = manager.uploadDirectory(bucketName, key, sourceFile, true, null);
 				try {
 					uploadDirectory.waitForCompletion();
@@ -137,11 +134,7 @@ public class CloudHelper {
 				return true;
 
 			} else {
-//				logger.info("Uploading a single file: " + sourceFile.getName()
-//						+ " to cloud.");
-//				PutObjectResult result = s3.putObject(new PutObjectRequest(
-//						bucketName, key, sourceFile));
-//				return true;
+
 				return uploadFileToCloud(bucketName, newKey, sourceFile);
 			}
 		} else {
