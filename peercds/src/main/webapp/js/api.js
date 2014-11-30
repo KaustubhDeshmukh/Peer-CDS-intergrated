@@ -153,10 +153,14 @@ var peerApi={
 				data:data,
 				contentType: "application/json",
 				success:function(res){
+					alert(res);
 					if(res.message!=undefined){
-						alert(res.message);
-						//$('#common-alert-modal').show();
-						//pop message
+						//pop up
+						$('#common-alert-modal').find('#alert-modal-header').css('background-color','#46b8da');
+						$('#common-alert-modal').modal('show');
+						$('#common-alert-modal').on('shown.bs.modal',function(){
+							$('#common-alert-modal').find('#message').html(res.message);
+						});
 					}
 				},
 				error:function(){

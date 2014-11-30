@@ -128,7 +128,11 @@ $(function(){
     $('input[type=file]#download_torrent').change(function(e){
     	$in=$(this);    	
     	var filename=$in.val().replace(/C:\\fakepath\\/i, '');
-    	peerApi.downloadTorrent(filename);
+    	
+    	    peerApi.downloadTorrent(filename);
+    	
+    	$in.val("");
+    	e.stopPropagation();    	
     });
     
     $('#Resume').click(function(){
