@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.event.ProgressListener;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
@@ -33,6 +34,7 @@ import com.amazonaws.services.s3.transfer.MultipleFileDownload;
 import com.amazonaws.services.s3.transfer.MultipleFileUpload;
 import com.amazonaws.services.s3.transfer.ObjectMetadataProvider;
 import com.amazonaws.services.s3.transfer.TransferManager;
+import com.amazonaws.services.s3.transfer.Upload;
 import com.google.common.base.Strings;
 
 public class CloudHelper {
@@ -92,7 +94,7 @@ public class CloudHelper {
 		logger.info("===========================================\n");
 
 		File file = new File("/Users/kaustubh/Desktop/mfile");
-		uploadTorrent("peer-cds", "mfile1", file);
+		uploadTorrent("peer-cds", "mfile1", file,null);
 		// downloadPiece("peer-cds", "mfile1/abc.pdf" , 10 , 11, false);
 		downloadCompleteDirectory(BUCKET_NAME, "mfile");
 		//downloadByteRangeFromDirectory(BUCKET_NAME, "mfile", "abc.pdf", 0, 117143);
@@ -100,7 +102,7 @@ public class CloudHelper {
 	}
 
 	public static boolean uploadTorrent(String bucketName, String key,
-			File sourceFile) throws S3FetchException {
+			File sourceFile, ProgressListener listener) throws S3FetchException {
 
 		if (Strings.isNullOrEmpty(bucketName) || Strings.isNullOrEmpty(key)
 				|| sourceFile == null || !sourceFile.exists())
@@ -120,7 +122,8 @@ public class CloudHelper {
 
 				MultipleFileUpload uploadDirectory = manager.uploadDirectory(bucketName, key, sourceFile, true, null);
 				try {
-					uploadDirectory.waitForCompletion();
+					if(listener!= null)
+					uploadDirectory.addProgressListener(listener);
 				} catch (Exception e) {
 					logger.error("Exception while uploading a directory: "
 							+ sourceFile.getName() + " to the cloud", e);
@@ -135,7 +138,7 @@ public class CloudHelper {
 
 			} else {
 
-				return uploadFileToCloud(bucketName, newKey, sourceFile);
+				return uploadFileToCloud(bucketName, newKey, sourceFile , listener);
 			}
 		} else {
 
@@ -144,12 +147,15 @@ public class CloudHelper {
 		}
 	}
 	
-	private static boolean uploadFileToCloud(String bucketName , String key , File sourceFile){
+	private static boolean uploadFileToCloud(String bucketName , String key , File sourceFile , ProgressListener listener){
 		logger.info("Uploading a single file: " + sourceFile.getName()
 				+ " to cloud.");
 		try{
-		PutObjectResult result = s3.putObject(new PutObjectRequest(
-				bucketName, key, sourceFile));
+		   PutObjectRequest putObjectRequest = new PutObjectRequest(
+				bucketName, key, sourceFile);
+		   Upload upload = manager.upload(putObjectRequest);
+		   if(listener!= null)
+			   upload.addProgressListener(listener);
 		}catch(Exception e){
 			logger.error("Exception while uploading file "+sourceFile.getName()+"to the torrent with key: "+key);
 			return false;

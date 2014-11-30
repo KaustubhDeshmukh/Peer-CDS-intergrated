@@ -642,33 +642,23 @@ public class Torrent {
 		Map<String, BEValue> info = new HashMap<String, BEValue>();
 		info.put("name", new BEValue(parent.getName()));
 		info.put("piece length", new BEValue(PIECE_LENGTH));
-
+		long size = 0;
+		int numFiles = 0;
 		if (files == null || files.isEmpty()) {
 			info.put("length", new BEValue(parent.length()));
+			size = parent.length();
+			numFiles++;
 			info.put("pieces", new BEValue(Torrent.hashFile(parent),
 				BYTE_ENCODING));
 		} else {
 			List<BEValue> fileInfo = new LinkedList<BEValue>();
 			List<File> updatedFilesList = new ArrayList<File>();
-//			for (File file : files) {
-//				Map<String, BEValue> fileMap = new HashMap<String, BEValue>();
-//				fileMap.put("length", new BEValue(file.length()));
-//
-//				LinkedList<BEValue> filePath = new LinkedList<BEValue>();
-//				while (file != null) {
-//					if (file.equals(parent)) {
-//						break;
-//					}
-//
-//					filePath.addFirst(new BEValue(file.getName()));
-//					file = file.getParentFile();
-//				}
-//
-//				fileMap.put("path", new BEValue(filePath));
-//				fileInfo.add(new BEValue(fileMap));
-//			}
 			updateFileInfo(files, parent, parent ,fileInfo ,updatedFilesList);
 			logger.info("Number of files in this multi-file torrent: "+updatedFilesList.size());
+			for(File file:updatedFilesList)
+				size = size + file.length();
+			logger.info("Number of bytes in this multi-file torrent: "+size);
+			numFiles = updatedFilesList.size();
 			info.put("files", new BEValue(fileInfo));
 			BEValue piecesValue = new BEValue(Torrent.hashFiles(updatedFilesList),
 					BYTE_ENCODING);
@@ -689,7 +679,7 @@ public class Torrent {
 		int i = 0;
 		for(byte bt : digest){
 			short s = (short) (bt & 0xFF);
-			if(s > 127){
+			if(s >= 127){
 				s = (short) (s - 127);
 				if (s< 32)
 					s = (short) (s + 32);
@@ -709,9 +699,10 @@ public class Torrent {
 		}
 	
 		logger.info("Sanitized cloud Key: "+cloudKeyForFile);
+		CloudUploadProgressListener listener = new CloudUploadProgressListener(size, numFiles);
 		boolean success = false;
 		try {
-			success = CloudHelper.uploadTorrent(BUCKET_NAME, cloudKeyForFile.trim(), parent);
+			success = CloudHelper.uploadTorrent(BUCKET_NAME, cloudKeyForFile.trim(), parent, listener);
 		} catch (S3FetchException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -734,7 +725,7 @@ public class Torrent {
 		return new Torrent(baos.toByteArray(), true);
 	}
 	
-	private static void updateFileInfo(List<File> filesList , File parent , File actualParent, List<BEValue> fileInfo , List<File> files) throws UnsupportedEncodingException{
+	private static void updateFileInfo(List<File> filesList , File parent , File actualParent, List<BEValue> fileInfo , List<File> files ) throws UnsupportedEncodingException{
 	
 		for (File file : filesList) {
 			if(!file.isDirectory()){

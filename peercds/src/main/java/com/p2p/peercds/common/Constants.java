@@ -28,14 +28,16 @@ public class Constants {
 			.put("@", "M").put("*", "N").put("+", "O").put("%", "P")
 			.put("^", "Q").put("<", "R").put(">", "S").put("_", "T")
 			.put(" ", "U").put("[", "V").put("]", "W").put("{", "X")
-			.put("}", "Y").put("\\", "z").build();
-	
+			.put("}", "Y").put("\\", "z").put("~", "1").put("?", "2")
+			.put("|", "3").put("`", "4").put("\"", "5").put("'", "6")
+			.put("-", "7").build();
+
 	public static final String DIRECTORY_RANGE_FETCH_KEY_FORMAT = "%s/%s";
-	
+
 	public static final String KEY_BUCKET_FORMAT = "%s/%s";
-	
+
 	public static final float CLOUD_PIECE_FETCH_RATIO = 0.10f;
-	
+
 	public static final FilenameFilter hiddenFilesFilter = new FilenameFilter() {
 		public boolean accept(File dir, String name) {
 			String lowercaseName = name.toLowerCase();
