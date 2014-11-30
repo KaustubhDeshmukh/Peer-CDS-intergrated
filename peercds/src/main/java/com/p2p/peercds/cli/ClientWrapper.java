@@ -407,6 +407,13 @@ public class ClientWrapper {
 
 		try {
 			
+			if(!torrentName.split("\\.(?=[^\\.]+$)")[1].equals("torrent")){
+				logger.info("downloadTorrent(): File is not a torrent file.");
+				response.setSuccess("false");
+				response.setMessage("Torrent Start Failed: File is not torrent file");
+				return response;
+			}
+			
 			Torrent torrent = Torrent.load(new File(defaultDirectory+torrentName));
 			logger.info("downloadTorrent(): Checking info_hash for duplicate torrent: "+torrentName);
 			info_hash = new String(torrent.getInfoHash(),"ISO-8859-1");
