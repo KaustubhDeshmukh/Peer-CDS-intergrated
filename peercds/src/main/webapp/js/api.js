@@ -224,8 +224,6 @@ var peerApi={
 				success:function(res){
 					console.log(res);
 					if(res.message!=undefined){
-						alert(res.message);
-						//pop message
 						//pop message
 						$('#common-alert-modal').find('#alert-modal-header').css('background-color','#DB0630');
 						$('#common-alert-modal').modal('show');
