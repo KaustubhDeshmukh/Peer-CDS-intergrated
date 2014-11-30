@@ -102,13 +102,13 @@ $(function(){
     	setInterval(timer, 3000);
     	timer();
     });
-    
-    
-    $('input[type=file]#create_torrent').change(function(e){
+
+	$('input[type=file]#create_torrent').change(function(e){
     	$in=$(this);    	
     	var filename=$in.val().replace(/C:\\fakepath\\/i, '');
-    	$('#tracker_url_modal').modal('show');
-    	if(filename!==""){
+    	
+    	$('#tracker_url_modal').modal('show');    	
+    	if(filename.length>0){
     		$('#url-submit').click(function(){
         		var trackerurl=$('#tracker_url').val();
     	       	 if(trackerurl!==""){
@@ -117,7 +117,12 @@ $(function(){
     	       	 }
         	});
     	}
+    	$in.val("");
+    	e.stopPropagation();
     });
+
+    
+    
     
     
     $('input[type=file]#download_torrent').change(function(e){

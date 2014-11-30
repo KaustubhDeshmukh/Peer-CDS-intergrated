@@ -65,6 +65,8 @@ p {
 .panel-back {
     /* background-color:#F8F8F8; */
     /* background-color:#D1D0CE; */
+    background-color:#FBFBFB;
+    border:1px solid black;
     padding:5px;
 
 }
