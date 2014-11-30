@@ -40,7 +40,6 @@ $(function(){
 		
 		// Cases to activate and deactivate button controls for each torrent
 		
-		
 		$('#torrent-info').show();
 		var files=myobject.currentFile;
 		myobject.selectedFile=$(this).attr('id');
@@ -103,32 +102,34 @@ $(function(){
     	timer();
     });
 
-	$('input[type=file]#create_torrent').change(function(e){
-    	$in=$(this);    	
-    	var filename=$in.val().replace(/C:\\fakepath\\/i, '');
+	$('#share-torrent').click(function(e){
+		
+		alert('hi');
+		//    	$in=$(this);    	
+//    	var filename=$in.val().replace(/C:\\fakepath\\/i, '');
     	
-    	$('#tracker_url_modal').modal('show');    	
-    	if(filename.length>0){
-    		$('#url-submit').click(function(){
-        		var trackerurl=$('#tracker_url').val();
-    	       	 if(trackerurl!==""){
-    	       		console.log(trackerurl);
-    	       		 peerApi.createTorrent(filename,trackerurl);
-    	       	 }
-        	});
-    	}
-    	$in.val("");
+//    	$('#tracker_url_modal').modal('show');    	
+//    	if(filename.length>0){
+//    		$('#url-submit').click(function(){
+//        		var trackerurl=$('#tracker_url').val();
+//    	       	 if(trackerurl!==""){
+//    	       		console.log(trackerurl);
+//    	       		 peerApi.createTorrent(filename,trackerurl);
+//    	       	 }
+//        	});
+//    	}
+//    	$in.val("");
     	e.stopPropagation();
     });
 
-    
-    
-    
-    
     $('input[type=file]#download_torrent').change(function(e){
     	$in=$(this);    	
     	var filename=$in.val().replace(/C:\\fakepath\\/i, '');
-    	peerApi.downloadTorrent(filename);
+    	
+    	    peerApi.downloadTorrent(filename);
+    	
+    	$in.val("");
+    	e.stopPropagation();    	
     });
     
     $('#Resume').click(function(){

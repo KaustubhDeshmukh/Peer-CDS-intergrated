@@ -31,7 +31,7 @@
 			</span>
 			
         	<span class="btn btn-danger btn-file" id="share-torrent">
-    			<i class="fa fa-share-square"></i> Share Torrent <input type="file" title="Search for a file to add" id="create_torrent">
+    			<i class="fa fa-share-square"></i> Share Torrent
 			</span>
 			
 			<span class="btn btn-info btn-file" id="download-torrent">
@@ -222,7 +222,7 @@
 		</div>
 		
 		
-		<!-- Set Default Path -->
+		<!-- Set Tracker Url -->
        
         <div class="modal fade" role="dialog" id="tracker_url_modal">
 			<div class="modal-dialog modal-sm">
@@ -242,7 +242,22 @@
 			</div>
 		</div>
 		
-		
+		<!-- Select File or Folder Upload -->
+		<div class="modal fade" role="dialog" id="upload_torrent">
+			<div class="modal-dialog modal-sm">
+				<div class="modal-header" id="alert-modal-header">
+					<b>Select File/Folder</b>
+				</div>
+				<div class="modal-content">
+					<div class="modal-body">
+						<input type="file" title="Search for a file to add" id="create_torrent">
+					</div>
+				<!-- <div class="modal-footer" id="modal-submit">
+					<button class="btn btn-success"  data-dismiss="modal">Ok</button>
+				</div> -->
+				</div>
+			</div>
+		</div>
 		<!-- Common Alert Modal -->
 		<div class="modal fade" role="dialog" id="common-alert-modal">
 			<div class="modal-dialog modal-sm">
