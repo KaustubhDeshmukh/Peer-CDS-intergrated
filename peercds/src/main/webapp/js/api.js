@@ -131,7 +131,6 @@ var peerApi={
 			data:data,
 			contentType:"application/json",
 			success:function(res){
-				$('#common-alert-modal').find('#alert-modal-header').css('background-color','#46b8da');
 				$('#common-alert-modal').modal('show');
 				$('#common-alert-modal').on('shown.bs.modal',function(){
 					$('#common-alert-modal').find('#message').html(res.message);
@@ -153,10 +152,8 @@ var peerApi={
 				data:data,
 				contentType: "application/json",
 				success:function(res){
-					alert(res);
 					if(res.message!=undefined){
 						//pop up
-						$('#common-alert-modal').find('#alert-modal-header').css('background-color','#46b8da');
 						$('#common-alert-modal').modal('show');
 						$('#common-alert-modal').on('shown.bs.modal',function(){
 							$('#common-alert-modal').find('#message').html(res.message);
@@ -180,7 +177,6 @@ var peerApi={
 				success:function(res){
 					console.log(res.message);
 					if(res.message!=undefined){
-						$('#common-alert-modal').find('#alert-modal-header').css('background-color','#00CE6F');
 						$('#common-alert-modal').modal('show');
 						$('#common-alert-modal').on('shown.bs.modal',function(){
 							$('#common-alert-modal').find('#message').html(res.message);
@@ -204,7 +200,6 @@ var peerApi={
 				console.log(res.message);
 				if(res.message!=undefined){
 					//pop message
-					$('#common-alert-modal').find('#alert-modal-header').css('background-color','#B94A00');
 					$('#common-alert-modal').modal('show');
 					$('#common-alert-modal').on('shown.bs.modal',function(){
 						$('#common-alert-modal').find('#message').html(res.message);
@@ -229,7 +224,6 @@ var peerApi={
 					console.log(res);
 					if(res.message!=undefined){
 						//pop message
-						$('#common-alert-modal').find('#alert-modal-header').css('background-color','#DB0630');
 						$('#common-alert-modal').modal('show');
 						$('#common-alert-modal').on('shown.bs.modal',function(){
 							$('#common-alert-modal').find('#message').html(res.message);
