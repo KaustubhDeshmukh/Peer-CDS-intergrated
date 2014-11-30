@@ -246,14 +246,14 @@ public class ClientWrapper {
 				metadata.setUploadSpeed(String.format("%.2f", ul/1024.0));
 
 				// set size
-				long size = client.getTorrent().getSize()/1024;
+				double size = client.getTorrent().getSize()/1024;
 				
 				if(size > 1024*1024){
-					metadata.setSize(String.valueOf(size/(1024*1024))+"GB");
+					metadata.setSize(String.format("%.2f",size/(1024*1024))+"GB");
 				} else if(size > 1024){
-					metadata.setSize(String.valueOf(size/1024)+"MB");
+					metadata.setSize(String.format("%.2f",(size/1024))+"MB");
 				} else {
-					metadata.setSize(String.valueOf(size)+"kB");
+					metadata.setSize(String.format("%.2f",(size))+"kB");
 				}
 				//set eta
 				metadata.setEta(String.valueOf(size/dl/60));
