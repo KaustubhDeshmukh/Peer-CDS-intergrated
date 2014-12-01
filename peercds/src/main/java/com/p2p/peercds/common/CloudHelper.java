@@ -449,7 +449,7 @@ public class CloudHelper {
 		try {
 			for (rem = piece.getObjectContent().read(holder); rem != -1; rem = piece
 					.getObjectContent().read(holder)) {
-				logger.info("fetched: " + rem + " bytes from cloud for key: "
+				logger.debug("fetched: " + rem + " bytes from cloud for key: "
 						+ key);
 				buffer.put(Arrays.copyOfRange(holder, 0, rem));
 			}

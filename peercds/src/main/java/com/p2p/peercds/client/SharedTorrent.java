@@ -540,7 +540,6 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 		if (!this.isComplete()) {
 			throw new IllegalStateException("Torrent download is not complete!");
 		}
-
 		this.bucket.finish();
 	}
 
@@ -903,7 +902,11 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 	}
 	
 	public float getCloudDLRate(){
+		if(!this.isComplete()){
 		float rate = numBytesFetchedFromCloud / ((System.currentTimeMillis() - lastCloudFetchTime) /1000.0f);
 		return rate;
+		}else{
+			return 0.0f;
+		}
 	}
 }
