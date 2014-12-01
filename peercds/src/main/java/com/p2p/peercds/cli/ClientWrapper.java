@@ -256,7 +256,7 @@ public class ClientWrapper {
 					metadata.setSize(String.format("%.2f",(size))+"kB");
 				}
 				//set eta
-				metadata.setEta(String.valueOf(size/dl/60));
+				
 
 				//set progress percent
 				metadata.setProgress(String.format("%.2f", client.getTorrent().getCompletion()));
@@ -265,7 +265,7 @@ public class ClientWrapper {
 				metadata.setPeers(String.valueOf(client.getPeers().size()));
 
 				//set name
-				metadata.setFileName(client.getTorrent().getName());
+				metadata.setFileName(clientMetadata.getTorrentName());
 
 				//set seeds
 				metadata.setSeeds(String.valueOf(noOfSeeds));
@@ -275,9 +275,16 @@ public class ClientWrapper {
 				if(state.equals(ClientState.SHARING)||state.equals(ClientState.VALIDATING)||state.equals(ClientState.WAITING)){
 
 					metadata.setStatus("Downloading");
+					if(dl == 0.00){
+						metadata.setEta("Infinity");
+					} else {
+						metadata.setEta(String.valueOf(size/(dl/1024)/60)+" min");
+					}
+					
 				} else {
 
 					metadata.setStatus("Seeding");
+					metadata.setEta("Infinity");
 				}
 
 				metadata.setUuid(clientEntry.getKey());
