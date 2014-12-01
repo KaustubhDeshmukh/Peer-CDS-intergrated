@@ -67,13 +67,12 @@ p {
     /* background-color:#D1D0CE; */
     background-color:#FBFBFB;
     border:1px solid black;
-    padding:5px;
 
 }
 
 .noti-box {
 	min-height:40px;
-	/* padding: 15px; */
+	padding-left:10px;
 	cursor: pointer;
 }
 
@@ -398,7 +397,8 @@ li{
 }
 
 #torrent-info{
-	width:780px;
+	width:880px;
+	padding:10px 15px;
 	/*padding:0px;*/
 		
 }

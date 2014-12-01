@@ -38,7 +38,7 @@
     			<i class="fa fa-share-square"></i> Share Torrent<input type="file" title="Search for a file to add" id=create_torrent value="">
 			</span>
 			
-			<span class="btn btn-danger btn-file" id="multi-torrent">
+			<span class="btn btn-default btn-file" id="multi-torrent">
     			<i class="fa fa-share-square"></i> Multi-File torrent<input type="file" id="file_input" webkitdirectory >
 			</span>
 			
@@ -174,18 +174,25 @@
 
                             <div class="tab-content" id="info-tabs">
                                 <div class="tab-pane fade active in" id="home">
-                                   <div class="col-md-4">
+                                   <div class="col-md-3">
                                    	<div class="info"><b>Status:</b><span id="status"></span></div>
                                    </div>
-                                   <div class="col-md-4">
+                                   <div class="col-md-3">
 	                                   	<div class="info"><b>Remaining:</b><span id="remaining_time"></span></div>
 	                                    <div class="info"><b>Time Elapsed:</b><span id="time_elapsed"></span></div>
                                    </div>
-                                   <div class="col-md-4">
+                                   <div class="col-md-3">
 	                                   	<div class="info"><b>Peers:</b><span id="peers_count"></span></div> 
 
 	                                    <div class="info"><b>Seeds:</b><span id="seeds_count"></span></div> 
                                    </div>
+                                   
+									<div class="col-md-3">
+	                                   	<div class="info"><b>Upload Speed:</b><span id="upload_speed"></span></div> 
+
+	                                    <div class="info"><b>Download Speed:</b><span id="download_speed"></span></div> 
+                                   </div>
+                                   
                                 </div>
 
                             </div>
