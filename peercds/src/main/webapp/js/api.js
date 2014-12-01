@@ -9,14 +9,9 @@ var peerApi={
 					myobject.getCurrentTorrentInfo(res);
 					$('#torrent-rows').empty();
 					for(var i=0;i<res.length;i++){
-						console.log(res[i]);
 						if(res[i].error==true){
 							$('col-md-3 col-sm-6 col-xs-4').hide();
 							myobject.currentTorrentState="error";
-							
-							$('#Pause > .panel-back').css('background-color','#D1D0CE');
-							$('#Pause').css('pointer-events','none');
-							
 							console.log(myobject.currentTorrentState);
 							var table='<tr class="file" id='+i+'>';
 							table=table+'<td class="fid">'+i+'</td>';
@@ -32,15 +27,14 @@ var peerApi={
 
 						} else if(res[i].paused==true){
 							myobject.currentTorrentState="paused";
-							console.log(myobject.currentTorrentState);
-							console.log(res[i].size);
+							var sno=i+1;
 							var table='<tr class="file" id='+i+'>';
-							table=table+'<td class="fid">'+i+'</td>';
+							table=table+'<td class="fid">'+sno+'</td>';
 							table=table+'<td class="file_name">'+res[i].fileName+'</td>';
 							table=table+'<td class="status">Paused</td>';
-							table=table+'<td class="prog"></td>';
-							table=table+'<td class="eta"></td>';
-							table=table+'<td class="size"></td>';
+							table=table+'<td class="prog">N/A</td>';
+							table=table+'<td class="eta">N/A</td>';
+							table=table+'<td class="size">N/A</td>';
 							table=table+'</tr>';
 							$('#torrent-rows').append(table);
 							if(myobject.selectedFile!=""){
@@ -50,13 +44,9 @@ var peerApi={
 						}else{
 
 							if(status==res[i].status || status=="all"){
-								$('#Resume').css('pointer-events','');
-								$('#Pause').css('pointer-events','');
-								$('#Pause > .panel-back').css('background-color','');
-								$('#Delete').css('pointer-events','');
-								
+								var sno=i+1;
 								var table='<tr class="file" id='+i+'>';
-								table=table+'<td class="fid">'+i+'</td>';
+								table=table+'<td class="fid">'+sno+'</td>';
 								table=table+'<td class="file_name">'+res[i].fileName+'</td>';
 								table=table+'<td class="status">'+res[i].status+'</td>';
 								table=table+'<td class="prog">'+ '<progress value='+'"'+res[i].progress+'"'+ 'max="100"></progress>'+'</td>';
@@ -90,7 +80,7 @@ var peerApi={
 				success:function(res){
 					console.log('success');
 					if(res.message!=undefined){
-						alert(res.message);
+//						alert(res.message);
 						//pop message
 					}
 				},

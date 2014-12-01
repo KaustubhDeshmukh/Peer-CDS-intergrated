@@ -13,6 +13,7 @@
 			myobject.currentFile=res;
 		},
 		currentFile:"",
+		selectedFile:"",
 		currentTorrentState:''
 	};
 	console.log('current file is '+myobject.currentFile);
@@ -23,6 +24,8 @@
 		$('#torrent-rows > tr').removeClass('info');
 		$('.dropdown-menu').hide();
 		myobject.selectedFile="";
+		myobject.currentFile="";
+		myobject.currentTorrentState="";
 		e.stopPropagation();
 	});
 	
@@ -30,27 +33,33 @@
 		$('#torrent-info').hide();
 		$('#torrent-rows > tr').removeClass('info');
 		myobject.selectedFile="";
+		myobject.currentFile="";
+		myobject.currentTorrentState="";
 		e.stopPropagation();
 	});
 	
 	$('document').click(function (e) {
 		$('.dropdown-menu').hide();
+		myobject.currentFile="";
+		myobject.currentTorrentState="";
 	});
 
 $(function(){
 	timer();
 	setInterval(timer, 3000);
 	$("#torrent_table").on('click','#torrent-rows > tr',function(e){
-		console.log('current file is '+myobject.currentFile);
-		console.log(myobject.currentFile[0].uuid);
-		var status=myobject.currentFile[0].status;
-		
+		var newcard=jQuery.extend(true, {}, myobject);
+		console.log(newcard);
 		// Cases to activate and deactivate button controls for each torrent
+		
 		
 		$('#torrent-info').show();
 		var files=myobject.currentFile;
+		console.log(files);
+		
 		myobject.selectedFile=$(this).attr('id');
 		peerApi.uuid=files[0].uuid;		
+		console.log(peerApi.uuid);
 		
 		$('#torrent-rows > tr').removeClass('info');
 		var active_row=$(this).attr('id');
@@ -61,11 +70,28 @@ $(function(){
 
 		var seeds=files[active_row].seeds;
 		var peers=files[active_row].peers;
-		var status=files[active_row].status;
+		var uploadSpeed=files[active_row].uploadSpeed;
+		var downloadSpeed=files[active_row].downloadSpeed;
+		var status;
+		if(files[active_row].paused==true){
+			status="Paused";
+		}
+		
+		if(files[active_row].error==true){
+			status="Error";
+		}
+		
+		if(files[active_row].status=="Downloading"){
+			status="Downloading";
+		}
+		
+		console.log(files[active_row]);
 		
 		$("#home").find("#status").html(status);
 		$("#home").find("#peers_count").html(peers);
 		$("#home").find("#seeds_count").html(seeds);
+		$("#home").find("#upload_speed").html(uploadSpeed);
+		$("#home").find("#download_speed").html(downloadSpeed);
 		e.stopPropagation();
 	});
 			
@@ -77,7 +103,6 @@ $(function(){
 			if(path!==""){
 				peerApi.setDefaultDirectory(path);
 			}
-			e.stopPropagation();
 		});
 		e.stopPropagation();
 	});
@@ -148,13 +173,6 @@ $(function(){
 			e.stopPropagation();
 		});
 	
-	
-	
-	
-	
-	
-	
-	
 
     $('input[type=file]#download_torrent').change(function(e){
     	$in=$(this);    	
@@ -167,6 +185,33 @@ $(function(){
     });
     
     $('#Resume').click(function(){
+    	console.log(myobject.currentFile);
+    	var row=myobject.currentFile;
+    	if(row.paused==true){
+			$('#Resume > .panel-back').css('background-color','');
+	        $('#Resume').css('pointer-events','');
+	        
+			$('#Pause > .panel-back').css('background-color','#D1D0CE');
+	        $('#Pause').css('pointer-events','none');
+	        
+	        $('#Delete > .panel-back').css('background-color','');
+	        $('#Delete').css('pointer-events','');
+		}
+		
+		
+		if(row.paused==false && row.status=="Downloading"){
+			$('#Resume > .panel-back').css('background-color','#D1D0CE');
+	        $('#Resume').css('pointer-events','none');
+	        
+			$('#Pause > .panel-back').css('background-color','');
+	        $('#Pause').css('pointer-events','');
+	        
+	        $('#Delete > .panel-back').css('background-color','');
+	        $('#Delete').css('pointer-events','');
+		}
+    	
+    	
+    	
     	if(myobject.currentFile!==""){
     		console.log('file is selected');
     		peerApi.startTorrent(peerApi.uuid);
@@ -175,6 +220,7 @@ $(function(){
     
     
     $('#Pause').click(function(){
+    	console.log(myobject.selectedFile);
     	if(myobject.currentFile!==""){
     		console.log('file is selected');
     		peerApi.pauseTorrent(peerApi.uuid);

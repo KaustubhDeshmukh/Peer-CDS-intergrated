@@ -484,11 +484,12 @@ public class Client extends Observable implements Runnable,
 		}
 		dl += this.torrent.getCloudDLRate();
 
-		logger.info("{} {}/{} pieces ({}%) [{}/{}] with {}/{} peers at {}/{} kB/s.",
+		logger.info("{} {}/{} pieces of torrent: {} ({}%) [{}/{}] with {}/{} peers at {}/{} kB/s.",
 			new Object[] {
 				this.getState().name(),
 				this.torrent.getCompletedPieces().cardinality(),
 				this.torrent.getPieceCount(),
+				this.torrent.getName(),
 				String.format("%.2f", this.torrent.getCompletion()),
 				this.torrent.getAvailablePieces().cardinality(),
 				this.torrent.getRequestedPieces().cardinality(),
