@@ -1,10 +1,9 @@
 package com.rest.service;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -12,18 +11,15 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.p2p.peercds.cli.ClientWrapper;
-import com.p2p.peercds.common.CloudHelper;
-import com.p2p.peercds.common.FetchSizeExceededException;
-import com.p2p.peercds.common.S3FetchException;
-import com.p2p.peercds.common.S3ObjectNotFoundException;
-import com.p2p.peercds.common.TruncatedPieceReadException;
 import com.rest.service.mappers.CreateTorrentResponseMapper;
 import com.rest.service.mappers.DefaultDirectoryRequestMapper;
 import com.rest.service.mappers.GenericResponseStatusMapper;
