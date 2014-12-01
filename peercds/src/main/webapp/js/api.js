@@ -1,5 +1,6 @@
 var peerApi={
 		uuid:'',
+
 		getTorrents:function(status){
 			$.ajax({
 				url:"http://localhost:8080/peercds/service/gettorrents",
@@ -17,9 +18,8 @@ var peerApi={
 							$('#Pause').css('pointer-events','none');
 							
 							console.log(myobject.currentTorrentState);
-							var id=i+1;
-							var table='<tr class="file" id='+id+'>';
-							table=table+'<td class="fid">'+id+'</td>';
+							var table='<tr class="file" id='+i+'>';
+							table=table+'<td class="fid">'+i+'</td>';
 							table=table+'<td class="file_name">'+res[i].fileName+'</td>';
 							table=table+'<td class="status">Error</td>';
 							table=table+'<td class="prog"></td>';
@@ -33,12 +33,9 @@ var peerApi={
 						} else if(res[i].paused==true){
 							myobject.currentTorrentState="paused";
 							console.log(myobject.currentTorrentState);
-							$('#Pause > .panel-back').css('background-color','#D1D0CE');
-							$('#Pause').css('pointer-events','none');
 							console.log(res[i].size);
-							var id=i+1;
-							var table='<tr class="file" id='+id+'>';
-							table=table+'<td class="fid">'+id+'</td>';
+							var table='<tr class="file" id='+i+'>';
+							table=table+'<td class="fid">'+i+'</td>';
 							table=table+'<td class="file_name">'+res[i].fileName+'</td>';
 							table=table+'<td class="status">Paused</td>';
 							table=table+'<td class="prog"></td>';
@@ -57,10 +54,9 @@ var peerApi={
 								$('#Pause').css('pointer-events','');
 								$('#Pause > .panel-back').css('background-color','');
 								$('#Delete').css('pointer-events','');
-								var id=i+1;
-								console.log(id);
-								var table='<tr class="file" id='+id+'>';
-								table=table+'<td class="fid">'+id+'</td>';
+								
+								var table='<tr class="file" id='+i+'>';
+								table=table+'<td class="fid">'+i+'</td>';
 								table=table+'<td class="file_name">'+res[i].fileName+'</td>';
 								table=table+'<td class="status">'+res[i].status+'</td>';
 								table=table+'<td class="prog">'+ '<progress value='+'"'+res[i].progress+'"'+ 'max="100"></progress>'+'</td>';
@@ -76,8 +72,8 @@ var peerApi={
 						}
 					}
 				},
-				error:function(){
-
+				error:function(error){
+					console.log(error);
 				}
 			});
 		},
