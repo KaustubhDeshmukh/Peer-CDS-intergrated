@@ -15,6 +15,8 @@
  */
 package com.p2p.peercds.client;
 
+import static com.p2p.peercds.common.Constants.PIECE_HASH_SIZE;
+import static com.p2p.peercds.common.Constants.PIECE_LENGTH;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -38,12 +40,12 @@ import org.slf4j.LoggerFactory;
 
 import com.p2p.peercds.bcodec.InvalidBEncodingException;
 import com.p2p.peercds.client.peer.PeerActivityListener;
+import com.p2p.peercds.client.peer.Rate;
 import com.p2p.peercds.client.peer.SharingPeer;
 import com.p2p.peercds.client.storage.FileCollectionStorage;
 import com.p2p.peercds.client.storage.FileStorage;
 import com.p2p.peercds.client.storage.TorrentByteStorage;
 import com.p2p.peercds.common.Torrent;
-import static com.p2p.peercds.common.Constants.*;
 
 
 /**
@@ -87,6 +89,8 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 	private long uploaded;
 	private long downloaded;
 	private long left;
+	private long numBytesFetchedFromCloud;
+	private long lastCloudFetchTime;
 
 	private final TorrentByteStorage bucket;
 
@@ -214,6 +218,8 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 
 		this.uploaded = 0;
 		this.downloaded = 0;
+		this.numBytesFetchedFromCloud = 0;
+		this.lastCloudFetchTime = 0;
 		this.left = this.getSize();
 
 		this.initialized = false;
@@ -799,6 +805,12 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 		// mark the piece as not requested anymore
 		this.downloaded += piece.size();
 		this.requestedPieces.set(piece.getIndex(), false);
+		
+		if(peer == null){
+			logger.info("Piece: "+piece+" has been downloaded from the cloud. Adding the count to the cloud download rate");
+			numBytesFetchedFromCloud += PIECE_LENGTH;
+			lastCloudFetchTime = System.currentTimeMillis();
+		}
 
 		logger.trace("We now have {} piece(s) and {} outstanding request(s): {}",
 			new Object[] {
@@ -890,5 +902,8 @@ public class SharedTorrent extends Torrent implements PeerActivityListener {
 		requestedPieces.set(pieceIndex);
 	}
 	
-	
+	public float getCloudDLRate(){
+		float rate = numBytesFetchedFromCloud / ((System.currentTimeMillis() - lastCloudFetchTime) /1000.0f);
+		return rate;
+	}
 }

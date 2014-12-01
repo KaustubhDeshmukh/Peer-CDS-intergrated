@@ -91,7 +91,7 @@ public class Client extends Observable implements Runnable,
 	/** Optimistic unchokes are done every 2 loop iterations, i.e. every
 	 * 2*UNCHOKING_FREQUENCY seconds. */
 	private static final int OPTIMISTIC_UNCHOKE_ITERATIONS = 3;
-	private static final int CLOUD_FETCH_EVENT_ITERATIONS = 3;
+	private static final int CLOUD_FETCH_EVENT_ITERATIONS = 4;
 	private static final int RATE_COMPUTATION_ITERATIONS = 2;
 	private static final int MAX_DOWNLOADERS_UNCHOKE = 4;
 
@@ -404,8 +404,9 @@ public class Client extends Observable implements Runnable,
 			if(!torrent.isComplete() && cloudFetchEventTriggerIterations == 0 && !torrent.isSeeder()){
 			try{
 				if(lock.tryLock()){
-					if(!Strings.isNullOrEmpty(torrent.getCloudKey()))
-				eventBus.post(new CloudFetchEvent(connected, torrent));
+					if(!Strings.isNullOrEmpty(torrent.getCloudKey())){
+						eventBus.post(new CloudFetchEvent(connected, torrent));
+					}
 					else
 						logger.info("Non peer-cds torrent. Skipping the cloud event trigger");
 					lock.unlock();
@@ -481,6 +482,7 @@ public class Client extends Observable implements Runnable,
 			dl += peer.getDLRate().get();
 			ul += peer.getULRate().get();
 		}
+		dl += this.torrent.getCloudDLRate();
 
 		logger.info("{} {}/{} pieces ({}%) [{}/{}] with {}/{} peers at {}/{} kB/s.",
 			new Object[] {
