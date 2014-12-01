@@ -536,9 +536,13 @@ td{
 	margin:10px;
 }
 
-
+#invisible{
+	display:none;
+}
 
 
 #Pause{
 	filter: grayscale(100%);
 }
+
+#

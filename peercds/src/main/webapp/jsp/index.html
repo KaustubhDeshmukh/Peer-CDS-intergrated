@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Peer CDS</title>
     <script src="../js/jquery-2.0.0.min.js"></script>
+    
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    
+
 	<!-- BOOTSTRAP STYLES-->
     <link href="../css/bootstrap.css" rel="stylesheet" />
      <!-- FONTAWESOME STYLES-->
@@ -20,7 +24,7 @@
 
    
 </head>
-<body ng-app="" ng-controller="torrentsController">
+<body>
     <div id="wrapper">
         <nav class="navbar navbar-default navbar-cls-top " role="navigation" style="margin-bottom: 0">
         	<div id="create_btn" style="display: inline">
@@ -31,7 +35,11 @@
 			</span>
 			
         	<span class="btn btn-danger btn-file" id="share-torrent">
-    			<i class="fa fa-share-square"></i> Share Torrent
+    			<i class="fa fa-share-square"></i> Share Torrent<input type="file" title="Search for a file to add" id=create_torrent value="">
+			</span>
+			
+			<span class="btn btn-danger btn-file" id="multi-torrent">
+    			<i class="fa fa-share-square"></i> Multi-File torrent<input type="file" id="file_input" webkitdirectory >
 			</span>
 			
 			<span class="btn btn-info btn-file" id="download-torrent">
@@ -39,6 +47,7 @@
 				<i class="fa fa-download"></i> Download Torrent <input type="file" title="Search for a file to add" id=download_torrent value="">
         	</span>
         	</div>
+        	
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
                     <span class="sr-only">Toggle navigation</span>
@@ -46,7 +55,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="index.html">Peer Share</a> 
+                <a class="navbar-brand" >Peer Share</a> 
             </div>
         </nav>   
            <!-- /. NAV TOP  -->
@@ -243,21 +252,24 @@
 		</div>
 		
 		<!-- Select File or Folder Upload -->
-		<div class="modal fade" role="dialog" id="upload_torrent">
+		<!-- <div class="modal fade" role="dialog" id="upload_torrent">
 			<div class="modal-dialog modal-sm">
 				<div class="modal-header" id="alert-modal-header">
 					<b>Select File/Folder</b>
 				</div>
 				<div class="modal-content">
 					<div class="modal-body">
-						<input type="file" title="Search for a file to add" id="create_torrent">
-					</div>
-				<!-- <div class="modal-footer" id="modal-submit">
-					<button class="btn btn-success"  data-dismiss="modal">Ok</button>
-				</div> -->
+						<span class="btn btn-danger btn-file">
+    						<i class="fa fa-share-square"></i> Upload File<input type="file" title="Search for a file to add" id=create_torrent value="">
+						</span>
+						
+						<input type="file" id="file_input" webkitdirectory >
+						<ul id="dir-tree"></ul>
 				</div>
 			</div>
-		</div>
+		</div> -->
+		
+		
 		<!-- Common Alert Modal -->
 		<div class="modal fade" role="dialog" id="common-alert-modal">
 			<div class="modal-dialog modal-sm">
@@ -274,7 +286,13 @@
 				</div>
 			</div>
 		</div>
+	<div id="invisible">
+		<ul id="dir-tree"></ul>
+	</div>	
+		
     <script src="../js/api.js"></script>
 	<script src="../js/peer.js"></script>
+	<script src="../js/revoke.js"></script>
+	<script src="../js/fs.js"></script>
 </body>
 </html>

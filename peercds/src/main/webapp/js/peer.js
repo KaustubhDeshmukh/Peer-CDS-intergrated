@@ -15,11 +15,13 @@
 		currentFile:"",
 		currentTorrentState:''
 	};
-	
+	console.log('current file is '+myobject.currentFile);
+	if(myobject.currentFile==""){}
 	$('#torrent-info').hide();
 	$('#page-wrapper').click(function(e){
 		$('#torrent-info').hide();
 		$('#torrent-rows > tr').removeClass('info');
+		$('.dropdown-menu').hide();
 		myobject.selectedFile="";
 		e.stopPropagation();
 	});
@@ -30,11 +32,16 @@
 		myobject.selectedFile="";
 		e.stopPropagation();
 	});
+	
+	$('document').click(function (e) {
+		$('.dropdown-menu').hide();
+	});
 
 $(function(){
 	timer();
 	setInterval(timer, 3000);
 	$("#torrent_table").on('click','#torrent-rows > tr',function(e){
+		console.log('current file is '+myobject.currentFile);
 		console.log(myobject.currentFile[0].uuid);
 		var status=myobject.currentFile[0].status;
 		
@@ -62,15 +69,17 @@ $(function(){
 		e.stopPropagation();
 	});
 			
-	$('#default-path').click(function(){
+	$('#default-path').click(function(e){
 		$('#default-path-modal').modal('show');
 		
-		$("#resource-submit").click(function(){
+		$("#resource-submit").click(function(e){
 			var path=$("#resource-url").val();
 			if(path!==""){
 				peerApi.setDefaultDirectory(path);
 			}
+			e.stopPropagation();
 		});
+		e.stopPropagation();
 	});
     
     $('li').click(function(){
@@ -102,25 +111,50 @@ $(function(){
     	timer();
     });
 
-	$('#share-torrent').click(function(e){
-		
-		alert('hi');
-		//    	$in=$(this);    	
-//    	var filename=$in.val().replace(/C:\\fakepath\\/i, '');
-    	
-//    	$('#tracker_url_modal').modal('show');    	
-//    	if(filename.length>0){
-//    		$('#url-submit').click(function(){
-//        		var trackerurl=$('#tracker_url').val();
-//    	       	 if(trackerurl!==""){
-//    	       		console.log(trackerurl);
-//    	       		 peerApi.createTorrent(filename,trackerurl);
-//    	       	 }
-//        	});
-//    	}
-//    	$in.val("");
-    	e.stopPropagation();
-    });
+	
+		$('#create_torrent').change(function(e){
+			$in=$(this);
+			console.log($in.val());
+			$('#tracker_url_modal').modal('show');
+			var filename=$in.val().replace(/C:\\fakepath\\/i, '');
+			
+			if(filename.length>0){
+	    		$('#url-submit').click(function(){
+	        		var trackerurl=$('#tracker_url').val();
+	    	       	 if(trackerurl!==""){
+	    	       		 peerApi.createTorrent(filename,trackerurl);
+	    	       	 }
+	        	});
+	    	}
+			$in.val("");
+			
+			e.stopPropagation();
+		});
+    
+	
+	
+		$('#file_input').change(function(e){
+			$('#upload_torrent').modal('hide'); 
+			var folder_name=$('#dir-tree').find('li:first-child > a').html();
+			alert(folder_name);
+			$('#tracker_url_modal').modal('show');
+			$('#url-submit').click(function(){
+	    		var trackerurl=$('#tracker_url').val();
+		       	 if(trackerurl!==""){
+		       		 peerApi.createTorrent(folder_name,trackerurl);
+		       	 }
+	    	});
+			$('#dir-tree').empty();
+			e.stopPropagation();
+		});
+	
+	
+	
+	
+	
+	
+	
+	
 
     $('input[type=file]#download_torrent').change(function(e){
     	$in=$(this);    	
@@ -147,11 +181,13 @@ $(function(){
     	}
     });
     
-    $('#Delete').click(function(){
+    $('#Delete').click(function(e){
     	if(myobject.currentFile!==""){
-    		console.log('file is selected');
-    		peerApi.deleteTorrent(peerApi.uuid);
+    		if(confirm("Please confirm to delete the file")==true){
+        		peerApi.deleteTorrent(peerApi.uuid);
+    		}
     	}
+    	e.stopPropagation();
     });
         
 });

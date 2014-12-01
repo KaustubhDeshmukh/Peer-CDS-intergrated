@@ -1,8 +1,6 @@
 var peerApi={
-		//url:"http://localhost:8080/peercds/service/gettorrents",
-		
 		uuid:'',
-		
+
 		getTorrents:function(status){
 			$.ajax({
 				url:"http://localhost:8080/peercds/service/gettorrents",
@@ -35,8 +33,6 @@ var peerApi={
 						} else if(res[i].paused==true){
 							myobject.currentTorrentState="paused";
 							console.log(myobject.currentTorrentState);
-							$('#Pause > .panel-back').css('background-color','#D1D0CE');
-							$('#Pause').css('pointer-events','none');
 							console.log(res[i].size);
 							var table='<tr class="file" id='+i+'>';
 							table=table+'<td class="fid">'+i+'</td>';
@@ -76,8 +72,8 @@ var peerApi={
 						}
 					}
 				},
-				error:function(){
-
+				error:function(error){
+					console.log(error);
 				}
 			});
 		},
