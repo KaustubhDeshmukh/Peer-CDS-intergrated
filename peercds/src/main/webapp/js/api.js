@@ -22,6 +22,8 @@ var peerApi={
 							table=table+'<td class="eta"></td>';
 							table=table+'<td class="size"></td>';
 							$('#torrent-rows').append(table);
+							
+							
 							if(myobject.selectedFile!=""){
 								$('#torrent-rows tr').eq(myobject.selectedFile).addClass('info');
 							}
@@ -39,6 +41,8 @@ var peerApi={
 							table=table+'<td class="size">N/A</td>';
 							table=table+'</tr>';
 							$('#torrent-rows').append(table);
+
+							
 							if(myobject.selectedFile!=""){
 								$('#torrent-rows tr').eq(myobject.selectedFile).addClass('info');
 							}
@@ -57,6 +61,7 @@ var peerApi={
 								table=table+'<td class="size">'+res[i].size+'</td>';
 								table=table+'</tr>';
 								$('#torrent-rows').append(table);
+								
 								//console.log(myobject.selectedFile);
 								if(myobject.selectedFile!=""){
 									$('#torrent-rows tr').eq(myobject.selectedFile).addClass('info');
@@ -83,8 +88,10 @@ var peerApi={
 				success:function(res){
 					console.log('success');
 					if(res.message!=undefined){
-//						alert(res.message);
-						//pop message
+						$('#common-alert-modal').modal('show');
+						$('#common-alert-modal').on('shown.bs.modal',function(){
+							$('#common-alert-modal').find('#message').html(res.message);
+						});
 					}
 				},
 				error:function(){
