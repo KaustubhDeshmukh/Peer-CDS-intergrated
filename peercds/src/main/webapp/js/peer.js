@@ -89,6 +89,9 @@ $(function(){
 		var peers=row_object.peers;
 		var uploadSpeed=row_object.uploadSpeed;
 		var downloadSpeed=row_object.downloadSpeed;
+		var elapsedTime=row_object.elapsedTime;
+		var remainingTime=row_object.eta;
+		
 		var status;
 		if(row_object.paused==true){
 			status="Paused";
@@ -137,6 +140,9 @@ $(function(){
 		$("#home").find("#seeds_count").html(seeds);
 		$("#home").find("#upload_speed").html(uploadSpeed);
 		$("#home").find("#download_speed").html(downloadSpeed);
+		$("#home").find("#time_elapsed").html('<br>'+elapsedTime);
+		$("#home").find("#remaining_time").html('<br>'+remainingTime);
+		
 		e.stopPropagation();
 	});
 			
