@@ -120,6 +120,15 @@ public class Client extends Observable implements Runnable,
 	private Lock lock;
 	private Random random;
 	private CloudEventHandler cloudHandler;
+	private long startTime;
+
+	public long getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(long startTime) {
+		this.startTime = startTime;
+	}
 
 	/**
 	 * Initialize the BitTorrent client.
@@ -168,6 +177,7 @@ public class Client extends Observable implements Runnable,
 		this.cloudHandler = cloudHandler;
 		cloudHandler.registerPeerActivityListener(this);
 		cloudHandler.registerPeerActivityListener(torrent);
+		setStartTime(System.currentTimeMillis());
 	}
 
 	/**
@@ -247,6 +257,7 @@ public class Client extends Observable implements Runnable,
 	 */
 	public void share() {
 		this.share(-1);
+		
 	}
 
 	/**

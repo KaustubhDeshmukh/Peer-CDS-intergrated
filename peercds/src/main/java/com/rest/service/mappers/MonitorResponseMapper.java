@@ -14,7 +14,15 @@ public class MonitorResponseMapper {
 	private String size;
 	private boolean paused;
 	private boolean error;
+	private String elapsedTime;
 	
+	
+	public String getElapsedTime() {
+		return elapsedTime;
+	}
+	public void setElapsedTime(String elapsedTime) {
+		this.elapsedTime = elapsedTime;
+	}
 	public String getUuid() {
 		return uuid;
 	}

@@ -41,7 +41,10 @@ public class ClientWrapper {
 
 	private static String DEFAULT_OUTPUT_DIRECTORY = "/Desktop/torrentdir/";
 
-	private static String TORRENT_METADATA_DIRECTORY = "/Desktop/fileMap.txt";
+	private static String TORRENT_METADATA_DIRECTORY = "/fileMap.txt";
+	
+	private static int MINUTES_IN_AN_HOUR = 60;
+    private static int SECONDS_IN_A_MINUTE = 60;
 
 	private ClientWrapper() {
 
@@ -305,6 +308,17 @@ public class ClientWrapper {
 				metadata.setPaused(clientMetadata.isPaused());
 
 				metadata.setError(clientMetadata.isError());
+				
+				long startTime = client.getStartTime();
+				
+				long timeElapsed = System.currentTimeMillis() - startTime;
+				
+				logger.info("getTorrents(): startTime: "+startTime);
+				logger.info("getTorrents(): timeElapsed: "+System.currentTimeMillis());
+				logger.info("getTorrents(): timeElapsed: "+timeElapsed);
+				
+				metadata.setElapsedTime(timeConversion((int)(timeElapsed/1000)));
+				
 				responselist.add(metadata);
 			}
 			else {
@@ -605,8 +619,6 @@ public class ClientWrapper {
 		}
 	}
 	
-	private static int MINUTES_IN_AN_HOUR = 60;
-    private static int SECONDS_IN_A_MINUTE = 60;
     
 	private static String timeConversion(int totalSeconds) {
 		
