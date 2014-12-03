@@ -6,7 +6,7 @@ var peerApi={
 				url:"http://localhost:8080/peercds/service/gettorrents",
 				type:"GET",
 				success:function(res){
-					myobject.getCurrentTorrentInfo(res);
+					myobject.torrentsList=res;
 					$('#torrent-rows').empty();
 					for(var i=0;i<res.length;i++){
 						if(res[i].error==true){
@@ -14,6 +14,7 @@ var peerApi={
 							myobject.currentTorrentState="error";
 							console.log(myobject.currentTorrentState);
 							var table='<tr class="file" id='+i+'>';
+							table=table+'<td class="uuid" style="display:none">'+res[i].uuid+'</td>';
 							table=table+'<td class="fid">'+i+'</td>';
 							table=table+'<td class="file_name">'+res[i].fileName+'</td>';
 							table=table+'<td class="status">Error</td>';
@@ -29,6 +30,7 @@ var peerApi={
 							myobject.currentTorrentState="paused";
 							var sno=i+1;
 							var table='<tr class="file" id='+i+'>';
+							table=table+'<td class="uuid" style="display:none">'+res[i].uuid+'</td>';
 							table=table+'<td class="fid">'+sno+'</td>';
 							table=table+'<td class="file_name">'+res[i].fileName+'</td>';
 							table=table+'<td class="status">Paused</td>';
@@ -46,6 +48,7 @@ var peerApi={
 							if(status==res[i].status || status=="all"){
 								var sno=i+1;
 								var table='<tr class="file" id='+i+'>';
+								table=table+'<td class="uuid" style="display:none">'+res[i].uuid+'</td>';
 								table=table+'<td class="fid">'+sno+'</td>';
 								table=table+'<td class="file_name">'+res[i].fileName+'</td>';
 								table=table+'<td class="status">'+res[i].status+'</td>';
