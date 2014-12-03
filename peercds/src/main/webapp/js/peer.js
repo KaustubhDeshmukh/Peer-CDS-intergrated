@@ -105,6 +105,8 @@ $(function(){
 		        $('#Delete > .panel-back').css('background-color','');
 		        $('#Delete').css('pointer-events','');
 			}
+			$("#home").find("#time_elapsed").html('');
+			$("#home").find("#remaining_time").html('');
 		}
 		
 		if(row_object.error==true){
@@ -134,14 +136,22 @@ $(function(){
 	        $('#Delete > .panel-back').css('background-color','');
 	        $('#Delete').css('pointer-events','');
 		}
+		
 
 		$("#home").find("#status").html(status);
 		$("#home").find("#peers_count").html(peers);
 		$("#home").find("#seeds_count").html(seeds);
 		$("#home").find("#upload_speed").html(uploadSpeed);
 		$("#home").find("#download_speed").html(downloadSpeed);
-		$("#home").find("#time_elapsed").html('<br>'+elapsedTime);
-		$("#home").find("#remaining_time").html('<br>'+remainingTime);
+		if(row_object.paused!==true){
+			$("#home").find("#time_elapsed").html('<br>'+elapsedTime);
+			$("#home").find("#remaining_time").html('<br>'+remainingTime);
+		}else{
+			$("#home").find("#time_elapsed").html('');
+			$("#home").find("#remaining_time").html('');
+		}
+		
+		
 		
 		e.stopPropagation();
 	});
@@ -228,8 +238,7 @@ $(function(){
     	$in=$(this);    	
     	var filename=$in.val().replace(/C:\\fakepath\\/i, '');
     	
-    	    peerApi.downloadTorrent(filename);
-    	
+    	peerApi.downloadTorrent(filename);
     	$in.val("");
     	e.stopPropagation();    	
     });
