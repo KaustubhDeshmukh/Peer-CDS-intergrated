@@ -83,7 +83,7 @@ public class ClientWrapper {
 		logger.info("setDEFAULT_OUTPUT_DIRECTORY(): Default directory set to: "+dEFAULT_OUTPUT_DIRECTORY);
 	}
 
-	public CreateTorrentResponseMapper createTorrent(String fileName, String trackerURL){
+	public synchronized CreateTorrentResponseMapper createTorrent(String fileName, String trackerURL){
 
 		CreateTorrentResponseMapper response = new CreateTorrentResponseMapper();
 
@@ -119,9 +119,15 @@ public class ClientWrapper {
 			torrentName = fileName +".torrent";
 		}
 		
+		GenericTorrentResponseMapper downloadTorrentResponse = this.downloadTorrent(torrentName);
+		if(downloadTorrentResponse.getSuccess().equals("false")){
+			response.setSuccess("false");
+			response.setMessage(downloadTorrentResponse.getMessage());
+			return response;
+		}
+				
 		logger.info("createTorrent(): Starting seeding of torrent: "+torrentName);
-		this.downloadTorrent(torrentName);
-
+		
 		response.setSuccess("true");
 		response.setMessage("Torrent created successfully");
 
@@ -241,13 +247,18 @@ public class ClientWrapper {
 						noOfSeeds++;
 					}
 				}
-
-				metadata.setDownloadSpeed(String.format("%.2f", dl/1024.0));
-				metadata.setUploadSpeed(String.format("%.2f", ul/1024.0));
+				
+				dl= dl + client.getTorrent().getCloudDLRate();
+				
+				logger.info("getTorrents(): DL: "+dl/1024);
+				metadata.setDownloadSpeed(String.format("%.2f", dl/1024.0)+" kB/s");
+				metadata.setUploadSpeed(String.format("%.2f", ul/1024.0)+" kB/s");
 
 				// set size
-				double size = client.getTorrent().getSize()/1024;
 				
+				
+				double size = client.getTorrent().getSize()/1024;
+				logger.info("getTorrents(): Size: "+size);
 				if(size > 1024*1024){
 					metadata.setSize(String.format("%.2f",size/(1024*1024))+"GB");
 				} else if(size > 1024){
@@ -256,7 +267,7 @@ public class ClientWrapper {
 					metadata.setSize(String.format("%.2f",(size))+"kB");
 				}
 				//set eta
-				metadata.setEta(String.valueOf(size/dl/60));
+				
 
 				//set progress percent
 				metadata.setProgress(String.format("%.2f", client.getTorrent().getCompletion()));
@@ -265,7 +276,7 @@ public class ClientWrapper {
 				metadata.setPeers(String.valueOf(client.getPeers().size()));
 
 				//set name
-				metadata.setFileName(client.getTorrent().getName());
+				metadata.setFileName(clientMetadata.getTorrentName());
 
 				//set seeds
 				metadata.setSeeds(String.valueOf(noOfSeeds));
@@ -275,9 +286,18 @@ public class ClientWrapper {
 				if(state.equals(ClientState.SHARING)||state.equals(ClientState.VALIDATING)||state.equals(ClientState.WAITING)){
 
 					metadata.setStatus("Downloading");
+					if(dl == 0.00){
+						metadata.setEta("Infinity");
+					} else {
+						
+						logger.info("getTorrents(): ETA in seconds: "+size/(dl/1024));
+						metadata.setEta(timeConversion((int)(size/(dl/1024))));
+					}
+					
 				} else {
 
 					metadata.setStatus("Seeding");
+					metadata.setEta("Infinity");
 				}
 
 				metadata.setUuid(clientEntry.getKey());
@@ -394,7 +414,7 @@ public class ClientWrapper {
 		return genericresponse;
 	}
 
-	public GenericTorrentResponseMapper downloadTorrent(String torrentName){
+	public synchronized GenericTorrentResponseMapper downloadTorrent(String torrentName){
 
 		return downloadTorrent(getDEFAULT_OUTPUT_DIRECTORY(), torrentName, false);
 	}
@@ -584,5 +604,35 @@ public class ClientWrapper {
 			//e.printStackTrace();
 		}
 	}
+	
+	private static int MINUTES_IN_AN_HOUR = 60;
+    private static int SECONDS_IN_A_MINUTE = 60;
+    
+	private static String timeConversion(int totalSeconds) {
+		
+		logger.info("timeConversion(): totalseconds: "+totalSeconds);
+	    
+        int hours = totalSeconds / MINUTES_IN_AN_HOUR / SECONDS_IN_A_MINUTE;
+        int minutes = (totalSeconds - (hoursToSeconds(hours)))
+                / SECONDS_IN_A_MINUTE;
+        int seconds = totalSeconds
+                - ((hoursToSeconds(hours)) + (minutesToSeconds(minutes)));
+
+        if(hours > 0){
+        	return hours + " hrs " + minutes + " min " + seconds + " s";
+        } else if(minutes > 0){
+        	return minutes + " min " + seconds + " s";
+        } else {
+        	return seconds + " sec";
+        }
+    }
+	
+	private static int hoursToSeconds(int hours) {
+        return hours * MINUTES_IN_AN_HOUR * SECONDS_IN_A_MINUTE;
+    }
+
+    private static int minutesToSeconds(int minutes) {
+        return minutes * SECONDS_IN_A_MINUTE;
+    }
 
 }
